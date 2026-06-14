@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1f5c">
+  <title>คู่มือการใช้งาน — กิจการนักศึกษา</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy:   #0d1f5c;
+      --navy2:  #1a3080;
+      --gold:   #c8960c;
+      --gold-l: #f0c040;
+      --cream:  #f7f5f0;
+      --cream2: #eeeae0;
+      --text:   #12171f;
+      --text2:  #3d3a30;
+      --text3:  #7a7460;
+      --border: #e2ddd0;
+      --white:  #ffffff;
+    }
+    body { font-family: 'Sarabun', sans-serif; background: var(--cream); color: var(--text); font-size: 15px; line-height: 1.7; }
+
+    /* Topbar */
+    .topbar { background: linear-gradient(135deg,#060d20,#0d1f5c); border-bottom: 3px solid var(--gold); padding: 0 20px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-logo { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(200,150,12,.6); }
+    .topbar-logo-fb { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+    .topbar-text .t1 { color: #fff; font-weight: 800; font-size: .95rem; }
+    .topbar-text .t2 { color: var(--gold-l); font-size: .72rem; }
+    .back-btn { color: rgba(255,255,255,.8); background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 8px; padding: 6px 14px; font-family: inherit; font-size: .82rem; cursor: pointer; text-decoration: none; font-weight: 600; }
+    .back-btn:hover { background: rgba(255,255,255,.2); }
+
+    /* Hero */
+    .hero { background: linear-gradient(135deg,#060d20 0%,#0d1f5c 60%,#1a3080 100%); padding: 40px 20px 32px; text-align: center; color: #fff; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; width: 300px; height: 300px; background: rgba(200,150,12,.08); border-radius: 50%; top: -100px; right: -80px; }
+    .hero::after { content: ''; position: absolute; height: 4px; bottom: 0; left: 0; right: 0; background: linear-gradient(90deg,#5a3800,var(--gold),var(--gold-l),var(--gold),#5a3800); }
+    .hero-logo { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(200,150,12,.6); margin-bottom: 14px; }
+    .hero-logo-fb { width: 72px; height: 72px; border-radius: 50%; background: rgba(255,255,255,.15); border: 3px solid rgba(200,150,12,.5); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin: 0 auto 14px; }
+    .hero h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; }
+    .hero .sub { color: var(--gold-l); font-size: .88rem; margin-bottom: 6px; }
+    .hero .ver { color: rgba(255,255,255,.45); font-size: .75rem; }
+
+    /* Layout */
+    .layout { max-width: 860px; margin: 0 auto; padding: 24px 16px 60px; display: grid; grid-template-columns: 210px 1fr; gap: 24px; align-items: start; }
+    @media (max-width: 680px) { .layout { grid-template-columns: 1fr; } .sidebar { display: none; } }
+
+    /* Sidebar */
+    .sidebar { position: sticky; top: 76px; background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: 0 2px 12px rgba(13,31,92,.06); }
+    .sidebar h3 { font-size: .78rem; font-weight: 800; color: var(--text3); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid var(--gold); }
+    .toc-link { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 8px; color: var(--text2); font-size: .82rem; font-weight: 600; text-decoration: none; transition: all .15s; cursor: pointer; }
+    .toc-link:hover, .toc-link.active { background: #f0ecdf; color: var(--navy); }
+    .toc-link .ic { font-size: 1rem; width: 20px; text-align: center; }
+    .toc-link .num { font-size: .65rem; background: var(--navy); color: #fff; border-radius: 4px; padding: 1px 5px; margin-left: auto; }
+
+    /* Chapter */
+    .chapter { background: var(--white); border-radius: 16px; border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; box-shadow: 0 2px 12px rgba(13,31,92,.06); }
+    .chapter-header { background: linear-gradient(135deg,var(--navy),var(--navy2)); padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 3px solid var(--gold); }
+    .chapter-icon { width: 38px; height: 38px; background: rgba(200,150,12,.15); border: 1.5px solid rgba(200,150,12,.4); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .chapter-title { color: #fff; font-size: 1rem; font-weight: 800; }
+    .chapter-sub   { color: rgba(255,255,255,.6); font-size: .75rem; margin-top: 2px; }
+    .chapter-body  { padding: 20px; }
+
+    /* Steps */
+    .steps { display: flex; flex-direction: column; margin: 12px 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .step { display: flex; gap: 14px; padding: 12px 14px; border-bottom: 1px solid var(--cream2); }
+    .step:last-child { border-bottom: none; }
+    .step:nth-child(even) { background: var(--cream); }
+    .step-num { width: 30px; height: 30px; background: linear-gradient(135deg,var(--navy),var(--navy2)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: .88rem; flex-shrink: 0; border: 2px solid rgba(200,150,12,.4); }
+    .step-content { flex: 1; }
+    .step-title { font-weight: 700; font-size: .92rem; color: var(--navy); }
+    .step-desc  { font-size: .82rem; color: var(--text3); margin-top: 2px; }
+
+    /* Feature grid */
+    .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+    @media (max-width: 500px) { .feature-grid { grid-template-columns: 1fr; } }
+    .feature-card { background: var(--cream); border: 1px solid var(--border); border-radius: 10px; padding: 12px; border-left: 3px solid var(--gold); }
+    .feature-card .fc-icon { font-size: 1.3rem; margin-bottom: 4px; display: block; }
+    .feature-card .fc-title { font-weight: 800; font-size: .88rem; color: var(--navy); }
+    .feature-card .fc-desc  { font-size: .78rem; color: var(--text3); margin-top: 3px; line-height: 1.5; }
+
+    /* Table */
+    .guide-table { width: 100%; border-collapse: collapse; font-size: .85rem; margin: 12px 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+    .guide-table th { background: var(--navy); color: #fff; font-weight: 700; padding: 10px 12px; text-align: left; }
+    .guide-table td { padding: 9px 12px; border-bottom: 1px solid var(--cream2); vertical-align: top; }
+    .guide-table tr:last-child td { border-bottom: none; }
+    .guide-table tr:nth-child(even) td { background: var(--cream); }
+
+    /* Note */
+    .note { background: #fef3c7; border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: .85rem; color: #7a5200; margin: 12px 0; line-height: 1.6; }
+
+    /* Badge */
+    .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: .75rem; font-weight: 700; }
+    .badge-navy  { background: rgba(13,31,92,.1);   color: var(--navy); }
+    .badge-green { background: rgba(5,150,105,.12);  color: #065f46; }
+    .badge-gold  { background: rgba(200,150,12,.12); color: #7a5200; }
+
+    /* Role cards */
+    .role-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
+    .role-card { flex: 1; min-width: 130px; border-radius: 10px; padding: 12px 14px; border: 1px solid var(--border); }
+    .role-card.admin  { background: linear-gradient(135deg,#060d20,#0d1f5c); color:#fff; }
+    .role-card.vice   { background: linear-gradient(135deg,#1a0d5c,#2d1a80); color:#fff; }
+    .role-card.com    { background: linear-gradient(135deg,#014737,#065f46); color:#fff; }
+    .role-card.member { background: linear-gradient(135deg,#5a3800,#8a5c00); color:#fff; }
+    .role-card .rc-icon { font-size: 1.4rem; margin-bottom: 6px; display: block; }
+    .role-card .rc-name { font-weight: 800; font-size: .9rem; margin-bottom: 4px; }
+    .role-card .rc-desc { font-size: .78rem; opacity: .75; line-height: 1.5; }
+
+    /* Permission table */
+    .perm-table { width: 100%; border-collapse: collapse; font-size: .82rem; margin: 12px 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+    .perm-table th { background: var(--navy); color: #fff; font-weight: 700; padding: 9px 10px; text-align: center; font-size: .8rem; }
+    .perm-table th:first-child { text-align: left; }
+    .perm-table td { padding: 8px 10px; border-bottom: 1px solid var(--cream2); text-align: center; vertical-align: middle; }
+    .perm-table td:first-child { text-align: left; font-weight: 600; color: var(--text2); font-size: .82rem; }
+    .perm-table tr:last-child td { border-bottom: none; }
+    .perm-table tr:nth-child(even) td { background: var(--cream); }
+    .perm-table .section-row td { background: linear-gradient(135deg,#0d1f5c,#1a3080); color: #f0c040; font-weight: 800; font-size: .78rem; letter-spacing: .04em; padding: 6px 10px; }
+    .perm-table .section-row td:first-child { text-align: left; }
+    .yes { color: #065f46; font-size: 1.1rem; font-weight: 800; }
+    .no  { color: #9ca3af; font-size: 1.1rem; }
+    .limit { color: #c8960c; font-size: .78rem; font-weight: 700; }
+
+    /* Status list */
+    .status-list { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+    .status-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-radius: 8px; background: var(--cream); border: 1px solid var(--border); }
+    .status-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .status-text .st { font-weight: 700; font-size: .88rem; color: var(--navy); }
+    .status-text .sd { font-size: .8rem; color: var(--text3); margin-top: 1px; }
+
+    /* FAQ */
+    .faq-item { border-bottom: 1px solid var(--border); padding: 14px 0; }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-q { font-weight: 800; font-size: .92rem; color: var(--navy); margin-bottom: 6px; }
+    .faq-q::before { content: 'Q  '; color: var(--gold); }
+    .faq-a { font-size: .88rem; color: var(--text2); line-height: 1.65; }
+    .faq-a::before { content: 'A  '; color: var(--text3); font-weight: 700; }
+
+    /* URL box */
+    .url-box { background: var(--navy); border-radius: 10px; padding: 14px 20px; text-align: center; font-weight: 800; font-size: 1rem; color: var(--gold-l); border-bottom: 3px solid var(--gold); margin: 14px 0; }
+
+    p { margin-bottom: 8px; }
+    h4 { font-size: .92rem; font-weight: 800; color: var(--navy); margin: 14px 0 8px; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <img src="icons/logo.png" class="topbar-logo" alt="logo"
+         onerror="this.style.display='none';document.getElementById('tbFb').style.display='flex'">
+    <div class="topbar-logo-fb" id="tbFb" style="display:none;">🎓</div>
+    <div class="topbar-text">
+      <div class="t1">คู่มือการใช้งาน</div>
+      <div class="t2">ระบบกิจการนักศึกษา</div>
+    </div>
+  </div>
+  <a href="index.html" class="back-btn">← กลับหน้าหลัก</a>
+</div>
+
+<div class="hero">
+  <img src="icons/logo.png" class="hero-logo" alt="logo"
+       onerror="this.style.display='none';document.getElementById('heroFb').style.display='flex'">
+  <div class="hero-logo-fb" id="heroFb" style="display:none;">🎓</div>
+  <h1>คู่มือการใช้งาน</h1>
+  <div class="sub">คณะมนุษยศาสตร์และสังคมศาสตร์ · มหาวิทยาลัยสวนดุสิต</div>
+  <div class="ver">ระบบกิจการนักศึกษา v2.0 · อัปเดต มิถุนายน 2569</div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <h3>สารบัญ</h3>
+    <a class="toc-link" onclick="goTo('ch1')"><span class="ic">📊</span>ภาพรวมระบบ<span class="num">1</span></a>
+    <a class="toc-link" onclick="goTo('ch2')"><span class="ic">📝</span>สมัครสมาชิก<span class="num">2</span></a>
+    <a class="toc-link" onclick="goTo('ch3')"><span class="ic">🔐</span>เข้าสู่ระบบ<span class="num">3</span></a>
+    <a class="toc-link" onclick="goTo('ch4')"><span class="ic">🏠</span>หน้าหลักสมาชิก<span class="num">4</span></a>
+    <a class="toc-link" onclick="goTo('ch5')"><span class="ic">🪪</span>บัตรสมาชิก<span class="num">5</span></a>
+    <a class="toc-link" onclick="goTo('ch6')"><span class="ic">🎯</span>กิจกรรม &amp; ชั่วโมง<span class="num">6</span></a>
+    <a class="toc-link" onclick="goTo('ch7')"><span class="ic">🏅</span>คณะกรรมการ<span class="num">7</span></a>
+    <a class="toc-link" onclick="goTo('ch8')"><span class="ic">⭐</span>ประธาน / แอดมิน<span class="num">8</span></a>
+    <a class="toc-link" onclick="goTo('ch9')"><span class="ic">👑</span>รองประธาน<span class="num">9</span></a>
+    <a class="toc-link" onclick="goTo('ch10')"><span class="ic">📋</span>ตารางสิทธิ์<span class="num">10</span></a>
+    <a class="toc-link" onclick="goTo('ch11')"><span class="ic">❓</span>FAQ<span class="num">11</span></a>
+  </aside>
+
+  <main class="content">
+
+    <!-- CH1 -->
+    <section class="chapter" id="ch1">
+      <div class="chapter-header">
+        <div class="chapter-icon">📊</div>
+        <div><div class="chapter-title">บทที่ 1 — ภาพรวมระบบ</div><div class="chapter-sub">System Overview</div></div>
+      </div>
+      <div class="chapter-body">
+        <p>ระบบกิจการนักศึกษาเป็นเว็บแอปพลิเคชันสำหรับบริหารจัดการองค์กรนักศึกษา ครอบคลุมการลงทะเบียนสมาชิก การเข้าร่วมกิจกรรม ติดตามชั่วโมงสะสม และบริหารงานคณะกรรมการ</p>
+        <div class="url-box">🌐 https://gitjha-d8454.web.app</div>
+        <h4>สิทธิ์ผู้ใช้งาน 4 ระดับ</h4>
+        <div class="role-row">
+          <div class="role-card admin"><span class="rc-icon">⭐</span><div class="rc-name">ประธาน</div><div class="rc-desc">จัดการได้ทุกอย่าง รวมถึงลบกิจกรรมและดู Log</div></div>
+          <div class="role-card vice"><span class="rc-icon">👑</span><div class="rc-name">รองประธาน</div><div class="rc-desc">เหมือนประธานทุกอย่าง ยกเว้น ลบกิจกรรมไม่ได้</div></div>
+          <div class="role-card com"><span class="rc-icon">🏅</span><div class="rc-name">คณะกรรมการ</div><div class="rc-desc">เข้าร่วมกิจกรรม เพิ่มตำแหน่ง อนุมัติในหลักสูตร</div></div>
+          <div class="role-card member"><span class="rc-icon">👤</span><div class="rc-name">สมาชิก</div><div class="rc-desc">ดูกิจกรรม สมัครเข้าร่วม บัตรสมาชิก ชั่วโมงสะสม</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CH2 -->
+    <section class="chapter" id="ch2">
+      <div class="chapter-header">
+        <div class="chapter-icon">📝</div>
+        <div><div class="chapter-title">บทที่ 2 — การสมัครสมาชิก</div><div class="chapter-sub">Register</div></div>
+      </div>
+      <div class="chapter-body">
+        <p>นักศึกษาสมัครสมาชิกด้วยตนเองได้เลย ไม่ต้องรอให้ประธานเพิ่มให้</p>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">เปิดเว็บไซต์</div><div class="step-desc">https://gitjha-d8454.web.app</div></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">กดแท็บ "สมัครสมาชิก"</div><div class="step-desc">อยู่ด้านบนของหน้า Login</div></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">กรอกรหัสนักศึกษา</div><div class="step-desc">ต้องเป็นตัวเลข <strong>13 หลักเท่านั้น</strong></div></div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">กรอกชื่อ-นามสกุล</div><div class="step-desc">ชื่อ-นามสกุลจริงตามบัตรประชาชน</div></div></div>
+          <div class="step"><div class="step-num">5</div><div class="step-content"><div class="step-title">เลือกหลักสูตร / เบอร์โทร / Line ID</div><div class="step-desc">ไม่บังคับ — แสดงในบัตรสมาชิก</div></div></div>
+          <div class="step"><div class="step-num">6</div><div class="step-content"><div class="step-title">ตั้งรหัสผ่านและยืนยัน</div><div class="step-desc">อย่างน้อย 6 ตัวอักษร</div></div></div>
+          <div class="step"><div class="step-num">7</div><div class="step-content"><div class="step-title">กด "สมัครสมาชิก"</div><div class="step-desc">ระบบพาเข้าหน้าหลักอัตโนมัติ</div></div></div>
+        </div>
+        <div class="note">⚠️ รหัสนักศึกษาต้องเป็นตัวเลข 13 หลัก ไม่สามารถเปลี่ยนได้ภายหลัง</div>
+      </div>
+    </section>
+
+    <!-- CH3 -->
+    <section class="chapter" id="ch3">
+      <div class="chapter-header">
+        <div class="chapter-icon">🔐</div>
+        <div><div class="chapter-title">บทที่ 3 — การเข้าสู่ระบบ</div><div class="chapter-sub">Login</div></div>
+      </div>
+      <div class="chapter-body">
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">เปิดเว็บไซต์</div><div class="step-desc">https://gitjha-d8454.web.app</div></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">กรอกรหัสนักศึกษา 13 หลัก</div><div class="step-desc">รหัสที่ใช้ตอนสมัคร</div></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">กรอกรหัสผ่านและกด "เข้าสู่ระบบ"</div><div class="step-desc">ระบบนำไปหน้าที่ตรงกับสิทธิ์ของคุณโดยอัตโนมัติ</div></div></div>
+        </div>
+        <table class="guide-table">
+          <tr><th>สิทธิ์</th><th>หน้าที่ไป</th></tr>
+          <tr><td><span class="badge badge-navy">⭐ ประธาน</span></td><td>แผงประธาน (admin.html)</td></tr>
+          <tr><td><span class="badge badge-navy">👑 รองประธาน</span></td><td>แผงประธาน (admin.html)</td></tr>
+          <tr><td><span class="badge badge-green">🏅 คณะกรรมการ</span></td><td>แผงคณะกรรมการ</td></tr>
+          <tr><td><span class="badge badge-gold">👤 สมาชิก</span></td><td>หน้าหลักสมาชิก</td></tr>
+        </table>
+        <div class="note">💡 ลืมรหัสผ่าน? ติดต่อประธานกิจการนักศึกษาเพื่อให้รีเซ็ตให้</div>
+      </div>
+    </section>
+
+    <!-- CH4 -->
+    <section class="chapter" id="ch4">
+      <div class="chapter-header">
+        <div class="chapter-icon">🏠</div>
+        <div><div class="chapter-title">บทที่ 4 — สมาชิก: หน้าหลัก</div><div class="chapter-sub">Member Dashboard</div></div>
+      </div>
+      <div class="chapter-body">
+        <div class="feature-grid">
+          <div class="feature-card"><span class="fc-icon">📊</span><div class="fc-title">การ์ดสรุป</div><div class="fc-desc">งานที่เข้าร่วม ชั่วโมงสะสม งานเปิดรับ และตำแหน่ง</div></div>
+          <div class="feature-card"><span class="fc-icon">⏰</span><div class="fc-title">นาฬิกาสด</div><div class="fc-desc">แสดงเวลาปัจจุบัน real-time</div></div>
+          <div class="feature-card"><span class="fc-icon">⚡</span><div class="fc-title">ปุ่มลัด 4 ปุ่ม</div><div class="fc-desc">กิจกรรม / ชั่วโมง / ประวัติ / โปรไฟล์</div></div>
+          <div class="feature-card"><span class="fc-icon">📢</span><div class="fc-title">ข่าวสาร & ป้ายประกาศ</div><div class="fc-desc">ประกาศและรูปภาพจากประธาน</div></div>
+        </div>
+        <h4>เมนูด้านล่าง</h4>
+        <table class="guide-table">
+          <tr><th>ไอคอน</th><th>เมนู</th><th>หน้าที่</th></tr>
+          <tr><td>🏠</td><td>หน้าหลัก</td><td>Dashboard สรุปภาพรวม</td></tr>
+          <tr><td>🎯</td><td>กิจกรรม</td><td>ดูและสมัครกิจกรรมที่เปิดรับ</td></tr>
+          <tr><td>📋</td><td>ประวัติ</td><td>ประวัติการเข้าร่วมทั้งหมด</td></tr>
+          <tr><td>📢</td><td>ข่าวสาร</td><td>ดูประกาศทั้งหมด</td></tr>
+        </table>
+        <div class="note">💡 กดปุ่มวงกลมมุมบนขวา (ชื่อย่อ/รูปโปรไฟล์) เพื่อเปิดหน้าโปรไฟล์และบัตรสมาชิก</div>
+      </div>
+    </section>
+
+    <!-- CH5 -->
+    <section class="chapter" id="ch5">
+      <div class="chapter-header">
+        <div class="chapter-icon">🪪</div>
+        <div><div class="chapter-title">บทที่ 5 — บัตรสมาชิก</div><div class="chapter-sub">Digital Member Card</div></div>
+      </div>
+      <div class="chapter-body">
+        <p>บัตรสมาชิกดิจิทัลแสดงข้อมูลของคุณพร้อมโลโก้คณะและบาร์โค้ด</p>
+        <h4>วิธีเปิดบัตรสมาชิก</h4>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">กดปุ่มวงกลมมุมบนขวา</div><div class="step-desc">แสดงชื่อย่อหรือรูปโปรไฟล์</div></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">กด "🪪 บัตรสมาชิก"</div><div class="step-desc">ปุ่มอยู่ด้านล่างหน้าต่างโปรไฟล์</div></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">บัตรจะปรากฏขึ้น</div><div class="step-desc">ชื่อ รหัส หลักสูตร ตำแหน่ง ชั่วโมง บาร์โค้ด</div></div></div>
+        </div>
+        <h4>อัปโหลดรูปโปรไฟล์</h4>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">เปิดโปรไฟล์หรือบัตรสมาชิก</div><div class="step-desc"></div></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">กดปุ่ม 📷 บริเวณรูป</div><div class="step-desc"></div></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">เลือกรูปจากเครื่อง (JPG/PNG)</div><div class="step-desc">ระบบ compress อัตโนมัติก่อน upload</div></div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">รูปอัปเดตทันที</div><div class="step-desc">ทั้งบัตรสมาชิกและปุ่ม Avatar ด้านบน</div></div></div>
+        </div>
+        <div class="note">💡 แนะนำใช้รูปหน้าตรงพื้นหลังเรียบ ขนาดไม่เกิน 5MB</div>
+      </div>
+    </section>
+
+    <!-- CH6 -->
+    <section class="chapter" id="ch6">
+      <div class="chapter-header">
+        <div class="chapter-icon">🎯</div>
+        <div><div class="chapter-title">บทที่ 6 — กิจกรรมและชั่วโมงสะสม</div><div class="chapter-sub">Events &amp; Hours</div></div>
+      </div>
+      <div class="chapter-body">
+        <h4>สมัครเข้าร่วมกิจกรรม</h4>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">ไปที่เมนู "🎯 กิจกรรม"</div><div class="step-desc"></div></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">กดปุ่ม "+ เข้าร่วม"</div><div class="step-desc">ในกิจกรรมที่ยังเปิดรับ</div></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">เลือกตำแหน่ง (ถ้ามี)</div><div class="step-desc">บางกิจกรรมมีตำแหน่งงานให้เลือก</div></div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">กด "ยืนยันเข้าร่วม"</div><div class="step-desc">คำขอจะถูกส่งให้ประธานอนุมัติ</div></div></div>
+        </div>
+        <h4>สถานะคำขอ</h4>
+        <div class="status-list">
+          <div class="status-item"><div class="status-icon">⏳</div><div class="status-text"><div class="st">รออนุมัติ</div><div class="sd">ส่งคำขอแล้ว — กด "ยกเลิก" ได้หากเปลี่ยนใจ</div></div></div>
+          <div class="status-item"><div class="status-icon">✅</div><div class="status-text"><div class="st">เข้าร่วมแล้ว</div><div class="sd">อนุมัติแล้ว ชั่วโมงถูกบันทึกเรียบร้อย</div></div></div>
+          <div class="status-item"><div class="status-icon">✗</div><div class="status-text"><div class="st">ไม่อนุมัติ</div><div class="sd">ประธานไม่อนุมัติ ติดต่อประธานเพื่อสอบถาม</div></div></div>
+        </div>
+        <div class="note">💡 กดการ์ด "⏱️ ชั่วโมงสะสม" หรือเมนู "ประวัติ" เพื่อดูรายละเอียดชั่วโมงแต่ละกิจกรรม</div>
+        <h4>✏️ ขอแก้ไขโปรไฟล์ตัวเอง</h4>
+        <p>สมาชิกสามารถขอเปลี่ยนเบอร์โทรและ Line ID ได้เอง โดยต้องผ่านการอนุมัติจากประธานหรือคณะกรรมการก่อน</p>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">กดปุ่มวงกลมโปรไฟล์มุมบนขวา</div><div class="step-desc">เปิดหน้าต่างโปรไฟล์</div></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">กด "✏️ แก้ไขโปรไฟล์"</div><div class="step-desc">ปุ่มอยู่ด้านล่างของหน้าต่างโปรไฟล์</div></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">กรอกเบอร์โทร / Line ID ใหม่</div><div class="step-desc">แก้ไขได้เฉพาะเบอร์โทรและ Line ID</div></div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">กด "ส่งคำขอ"</div><div class="step-desc">ระบบส่งคำขอให้ประธาน/คณะกรรมการตรวจสอบ</div></div></div>
+          <div class="step"><div class="step-num">5</div><div class="step-content"><div class="step-title">รอการอนุมัติ</div><div class="step-desc">ข้อมูลจะอัปเดตเมื่อได้รับการอนุมัติ</div></div></div>
+        </div>
+        <div class="note">⚠️ ชื่อ-นามสกุล รหัสนักศึกษา และหลักสูตร — ต้องให้ประธานแก้ไขผ่านแผงประธานเท่านั้น</div>
+      </div>
+    </section>
+
+    <!-- CH7 -->
+    <section class="chapter" id="ch7">
+      <div class="chapter-header">
+        <div class="chapter-icon">🏅</div>
+        <div><div class="chapter-title">บทที่ 7 — คณะกรรมการ</div><div class="chapter-sub">Committee</div></div>
+      </div>
+      <div class="chapter-body">
+        <table class="guide-table">
+          <tr><th>ไอคอน</th><th>เมนู</th><th>หน้าที่</th></tr>
+          <tr><td>📊</td><td>ภาพรวม</td><td>สถิติทีมและกิจกรรมล่าสุด</td></tr>
+          <tr><td>👥</td><td>ทีมฉัน</td><td>รายชื่อสมาชิกในหลักสูตรเดียวกัน</td></tr>
+          <tr><td>🎯</td><td>กิจกรรม</td><td>ดู / สมัคร / เพิ่มตำแหน่ง / Export</td></tr>
+          <tr><td>🖼️</td><td>ป้ายประกาศ</td><td>ดูป้ายประกาศจากประธาน</td></tr>
+        </table>
+        <h4>เพิ่มตำแหน่งงานในกิจกรรม</h4>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">กดปุ่ม "📌 เพิ่มตำแหน่ง"</div><div class="step-desc">ในการ์ดกิจกรรมที่ยังเปิดรับ</div></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">กรอกชื่อตำแหน่งและจำนวนที่รับ</div><div class="step-desc">เช่น ช่างภาพ 2 คน / พิธีกร 1 คน</div></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">กด "เพิ่มตำแหน่ง"</div><div class="step-desc">สมาชิกสามารถเลือกตำแหน่งนี้ได้ทันที</div></div></div>
+        </div>
+        <div class="note">⚠️ คณะกรรมการ <strong>เพิ่มตำแหน่งได้เท่านั้น</strong> — การลบหรือแก้ไขต้องให้ประธานดำเนินการ</div>
+        <h4>Export รายชื่อผู้เข้าร่วม</h4>
+        <p>กดปุ่ม "📥 Export" ในการ์ดกิจกรรม — ไฟล์ .csv จะดาวน์โหลดอัตโนมัติ เปิดด้วย Excel หรือ Google Sheets ได้เลย มีคอลัมน์: ลำดับ ชื่อ รหัสนักศึกษา หลักสูตร ตำแหน่งงาน ชั่วโมง สถานะ อนุมัติโดย</p>
+      </div>
+    </section>
+
+    <!-- CH8 -->
+    <section class="chapter" id="ch8">
+      <div class="chapter-header">
+        <div class="chapter-icon">⭐</div>
+        <div><div class="chapter-title">บทที่ 8 — ประธาน / แอดมิน</div><div class="chapter-sub">Admin Panel</div></div>
+      </div>
+      <div class="chapter-body">
+        <table class="guide-table">
+          <tr><th>ไอคอน</th><th>เมนู</th><th>หน้าที่</th></tr>
+          <tr><td>📊</td><td>ภาพรวม</td><td>สถิติรวม กิจกรรมล่าสุด Leaderboard</td></tr>
+          <tr><td>👥</td><td>สมาชิก</td><td>เพิ่ม / แก้ไข / ลบ / ค้นหาสมาชิก</td></tr>
+          <tr><td>🎯</td><td>กิจกรรม</td><td>สร้าง / แก้ไข / ปิด / อนุมัติผู้เข้าร่วม</td></tr>
+          <tr><td>🖼️</td><td>ป้ายประกาศ</td><td>เพิ่ม / แก้ไข / ลบป้ายและประกาศ</td></tr>
+          <tr><td>📝</td><td>Log</td><td>ดูประวัติการกระทำ / เคลียร์ Log</td></tr>
+        </table>
+        <h4>การจัดการสมาชิก</h4>
+        <div class="feature-grid">
+          <div class="feature-card"><span class="fc-icon">➕</span><div class="fc-title">เพิ่มสมาชิก</div><div class="fc-desc">กด "+ เพิ่มสมาชิก" กรอกข้อมูลและรหัสผ่านเริ่มต้น</div></div>
+          <div class="feature-card"><span class="fc-icon">✏️</span><div class="fc-title">แก้ไขสมาชิก</div><div class="fc-desc">กดปุ่ม ✏️ หน้าชื่อ แก้ไขได้ทุกฟิลด์</div></div>
+          <div class="feature-card"><span class="fc-icon">🗑️</span><div class="fc-title">ลบสมาชิก</div><div class="fc-desc">ระบบถามยืนยันก่อนทุกครั้ง</div></div>
+          <div class="feature-card"><span class="fc-icon">🔍</span><div class="fc-title">ค้นหา / กรอง</div><div class="fc-desc">พิมพ์ชื่อ/รหัส กรองตามหลักสูตรหรือสิทธิ์</div></div>
+        </div>
+        <h4>การจัดการกิจกรรม</h4>
+        <div class="feature-grid">
+          <div class="feature-card"><span class="fc-icon">🆕</span><div class="fc-title">สร้างกิจกรรม</div><div class="fc-desc">ชื่อ วันที่ ชั่วโมง สถานที่ ตำแหน่งงาน</div></div>
+          <div class="feature-card"><span class="fc-icon">✅</span><div class="fc-title">อนุมัติผู้เข้าร่วม</div><div class="fc-desc">กดชื่อกิจกรรม อนุมัติ/ปฏิเสธรายบุคคล</div></div>
+          <div class="feature-card"><span class="fc-icon">✏️</span><div class="fc-title">แก้ไขกิจกรรม</div><div class="fc-desc">แก้ไขได้ทุกฟิลด์รวมถึงตำแหน่งงาน</div></div>
+          <div class="feature-card"><span class="fc-icon">🔒</span><div class="fc-title">ปิดรับสมัคร</div><div class="fc-desc">เปลี่ยนสถานะกิจกรรมเป็น "ปิดแล้ว"</div></div>
+        </div>
+        <h4>✏️ อนุมัติคำขอแก้ไขโปรไฟล์สมาชิก</h4>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">มีการแจ้งเตือนคำขอใหม่ในแท็บ "สมาชิก"</div><div class="step-desc">ส่วน ✏️ คำขอแก้ไขโปรไฟล์ จะแสดงจำนวนคำขอที่รอ</div></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">ตรวจสอบข้อมูลที่ขอแก้ไข</div><div class="step-desc">ระบบแสดงค่าเดิมและค่าใหม่ที่ขอเปลี่ยน</div></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">กด ✓ อนุมัติ หรือ ✗ ปฏิเสธ</div><div class="step-desc">ถ้าอนุมัติ ข้อมูลในโปรไฟล์สมาชิกจะอัปเดตทันที</div></div></div>
+        </div>
+        <div class="note">⚠️ การเคลียร์ Log ไม่สามารถกู้คืนได้ — ควรบันทึกสำรองก่อนหากจำเป็น</div>
+      </div>
+    </section>
+
+    <!-- CH9 -->
+    <section class="chapter" id="ch9">
+      <div class="chapter-header">
+        <div class="chapter-icon">👑</div>
+        <div><div class="chapter-title">บทที่ 9 — รองประธาน</div><div class="chapter-sub">Vice President</div></div>
+      </div>
+      <div class="chapter-body">
+        <p>รองประธานใช้งานแผงเดียวกับประธาน แต่มีข้อจำกัดบางอย่างเพื่อป้องกันความผิดพลาด</p>
+        <div class="feature-grid">
+          <div class="feature-card" style="border-left-color:#065f46"><span class="fc-icon">✅</span><div class="fc-title">ทำได้ทุกอย่างเหมือนประธาน</div><div class="fc-desc">เพิ่ม/แก้ไขสมาชิก สร้างกิจกรรม อนุมัติผู้เข้าร่วม จัดการป้ายประกาศ</div></div>
+          <div class="feature-card" style="border-left-color:#dc2626"><span class="fc-icon">🚫</span><div class="fc-title">ลบกิจกรรมไม่ได้</div><div class="fc-desc">ปุ่มลบกิจกรรมจะถูกซ่อนอัตโนมัติ — ต้องให้ประธานดำเนินการ</div></div>
+        </div>
+        <h4>วิธีกำหนด Role รองประธาน</h4>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">เข้าแผงประธาน → เมนู "👥 สมาชิก"</div><div class="step-desc"></div></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">กด ✏️ แก้ไขสมาชิก</div><div class="step-desc">เลือกสมาชิกที่ต้องการแต่งตั้ง</div></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">เปลี่ยนสิทธิ์เป็น "รองประธาน"</div><div class="step-desc">ในช่อง "สิทธิ์" เลือก รองประธาน แล้วกดบันทึก</div></div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">สมาชิกคนนั้น Login ใหม่</div><div class="step-desc">ระบบจะพาไปหน้าแผงประธานอัตโนมัติ</div></div></div>
+        </div>
+        <div class="note">💡 รองประธานสามารถปิดรับกิจกรรม (🔒) ได้ แต่ไม่สามารถลบกิจกรรมออกจากระบบได้</div>
+      </div>
+    </section>
+
+    <!-- CH10 -->
+    <section class="chapter" id="ch10">
+      <div class="chapter-header">
+        <div class="chapter-icon">📋</div>
+        <div><div class="chapter-title">บทที่ 10 — ตารางสิทธิ์การใช้งาน</div><div class="chapter-sub">Permissions by Role</div></div>
+      </div>
+      <div class="chapter-body">
+        <p>ตารางด้านล่างแสดงสิ่งที่แต่ละ Role ทำได้และไม่ได้ในระบบ</p>
+        <table class="perm-table">
+          <tr>
+            <th style="width:36%">ฟีเจอร์</th>
+            <th>👤<br>สมาชิก</th>
+            <th>🏅<br>กรรมการ</th>
+            <th>👑<br>รองประธาน</th>
+            <th>⭐<br>ประธาน</th>
+          </tr>
+          <tr class="section-row"><td colspan="5">👤 บัญชีและโปรไฟล์</td></tr>
+          <tr><td>สมัครสมาชิกด้วยตนเอง</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>อัปโหลดรูปโปรไฟล์</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>ขอแก้ไขเบอร์ / Line ID</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>ดูบัตรสมาชิกดิจิทัล</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr class="section-row"><td colspan="5">🎯 กิจกรรม</td></tr>
+          <tr><td>ดูรายการกิจกรรม</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>สมัครเข้าร่วมกิจกรรม</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>ยกเลิกคำขอเข้าร่วม</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>สร้างกิจกรรมใหม่</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>แก้ไขกิจกรรม</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>ปิดรับสมัครกิจกรรม</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>ลบกิจกรรม</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>อนุมัติ / ปฏิเสธผู้เข้าร่วม</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>เพิ่มตำแหน่งงานในกิจกรรม</td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Export รายชื่อ CSV</td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr class="section-row"><td colspan="5">👥 จัดการสมาชิก</td></tr>
+          <tr><td>ดูรายชื่อสมาชิกทั้งหมด</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>เพิ่มสมาชิกใหม่</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>แก้ไขข้อมูลสมาชิก</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>ลบสมาชิก</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>อนุมัติคำขอแก้ไขโปรไฟล์</td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>กำหนด Role ผู้ใช้</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr class="section-row"><td colspan="5">📢 ประกาศและป้าย</td></tr>
+          <tr><td>ดูประกาศและป้ายประกาศ</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>ลงประกาศใหม่</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>เพิ่ม / แก้ไขป้ายประกาศ</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>ลบประกาศ / ป้าย</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr class="section-row"><td colspan="5">📝 Log และระบบ</td></tr>
+          <tr><td>ดู Activity Log</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>Export Log CSV</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+          <tr><td>เคลียร์ Log ทั้งหมด</td><td><span class="no">—</span></td><td><span class="no">—</span></td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td></tr>
+        </table>
+        <div class="note">💡 <strong>✓</strong> = ทำได้ &nbsp;|&nbsp; <strong>—</strong> = ไม่มีสิทธิ์ &nbsp;|&nbsp; ข้อจำกัดเดียวของรองประธานคือ <strong>ลบกิจกรรมไม่ได้</strong></div>
+      </div>
+    </section>
+
+    <!-- CH11 (เดิม ch9) -->
+    <section class="chapter" id="ch11">
+      <div class="chapter-header">
+        <div class="chapter-icon">❓</div>
+        <div><div class="chapter-title">บทที่ 11 — คำถามที่พบบ่อย</div><div class="chapter-sub">FAQ</div></div>
+      </div>
+      <div class="chapter-body">
+        <div class="faq-item"><div class="faq-q">ลืมรหัสผ่านทำอย่างไร?</div><div class="faq-a">ติดต่อประธานกิจการนักศึกษาเพื่อให้รีเซ็ตรหัสผ่าน ไม่มีระบบรีเซ็ตอัตโนมัติ</div></div>
+        <div class="faq-item"><div class="faq-q">สมัครแล้วเข้าไม่ได้?</div><div class="faq-a">ตรวจสอบรหัสนักศึกษาครบ 13 หลัก และรหัสผ่านถูกต้อง ถ้ายังไม่ได้ติดต่อประธาน</div></div>
+        <div class="faq-item"><div class="faq-q">เปลี่ยนเบอร์โทร / Line ID ได้ไหม?</div><div class="faq-a">ได้ — กดปุ่มโปรไฟล์ → "✏️ แก้ไขโปรไฟล์" → กรอกข้อมูลใหม่ → รอประธานหรือกรรมการอนุมัติ</div></div>
+        <div class="faq-item"><div class="faq-q">เปลี่ยนชื่อหรือหลักสูตรได้ไหม?</div><div class="faq-a">ไม่ได้ด้วยตนเอง — ต้องให้ประธานแก้ไขผ่านแผงประธาน (เมนูสมาชิก → ✏️ แก้ไข)</div></div>
+        <div class="faq-item"><div class="faq-q">รูปโปรไฟล์ไม่ขึ้น?</div><div class="faq-a">กด Ctrl+Shift+R เพื่อรีเฟรชแบบล้าง Cache</div></div>
+        <div class="faq-item"><div class="faq-q">ชั่วโมงสะสมไม่อัปเดต?</div><div class="faq-a">ชั่วโมงนับเฉพาะกิจกรรมที่ประธานอนุมัติแล้ว สถานะ ⏳ ยังไม่นับ</div></div>
+        <div class="faq-item"><div class="faq-q">ยกเลิกการสมัครกิจกรรมได้ไหม?</div><div class="faq-a">ได้ — เฉพาะสถานะ ⏳ รออนุมัติ กด "ยกเลิก" ในหน้ากิจกรรม</div></div>
+        <div class="faq-item"><div class="faq-q">Export แล้วเปิด Excel ไม่ได้?</div><div class="faq-a">ใช้ Excel เปิดผ่าน File > Open หรือนำเข้า Google Sheets โดยตรง</div></div>
+        <div class="faq-item"><div class="faq-q">เว็บข้อมูลไม่อัปเดต?</div><div class="faq-a">กด Ctrl+Shift+R (Windows) หรือ Cmd+Shift+R (Mac)</div></div>
+        <div class="faq-item"><div class="faq-q">รองประธานลบกิจกรรมไม่ได้?</div><div class="faq-a">ถูกต้อง — เป็นข้อจำกัดที่ตั้งใจออกแบบไว้ ต้องให้ประธานเป็นคนลบเท่านั้น</div></div>
+      </div>
+    </section>
+
+    <div style="background:linear-gradient(135deg,#060d20,#0d1f5c);border-radius:14px;padding:20px 24px;text-align:center;border-top:3px solid var(--gold);margin-top:8px;">
+      <div style="color:var(--gold-l);font-weight:800;font-size:.95rem;margin-bottom:6px;">ติดต่อผู้ดูแลระบบ</div>
+      <div style="color:rgba(255,255,255,.7);font-size:.82rem;line-height:1.9;">
+        ประธานกิจการนักศึกษา<br>
+        คณะมนุษยศาสตร์และสังคมศาสตร์ มหาวิทยาลัยสวนดุสิต<br>
+        <a href="https://gitjha-d8454.web.app" style="color:var(--gold-l);">https://gitjha-d8454.web.app</a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  function goTo(id) {
+    document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  const ids = ['ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8','ch9','ch10','ch11'];
+  const links = document.querySelectorAll('.toc-link');
+  window.addEventListener('scroll', () => {
+    let cur = 0;
+    ids.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el && el.getBoundingClientRect().top < 130) cur = i;
+    });
+    links.forEach((l, i) => l.classList.toggle('active', i === cur));
+  });
+</script>
+</body>
+</html>

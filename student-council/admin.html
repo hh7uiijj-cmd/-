@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1e1b4b">
+  <title>กิจการนักศึกษา — ประธาน</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="กิจการนักศึกษา">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .banner-img { width:100%; border-radius:var(--radius-sm); object-fit:cover; max-height:180px; display:block; margin-bottom:10px; background:var(--surface2); }
+    .banner-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:12px; box-shadow:var(--shadow-sm); }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar admin-topbar">
+    <div class="topbar-left">
+      <div class="topbar-icon">⭐</div>
+      <div>
+        <div class="topbar-title">แผงประธาน</div>
+        <div class="topbar-subtitle" id="adminSubtitle">กิจการนักศึกษา</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="topbar-avatar" id="adminAvatarBtn" title="โปรไฟล์">?</div>
+      <button class="btn btn-xs" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);" id="logoutTopBtn">ออก</button>
+    </div>
+  </header>
+  <main class="main-content" id="mainContent">
+    <div class="spinner-wrap"><div class="spinner"></div></div>
+  </main>
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="overview"><span class="nav-icon">📊</span><span>ภาพรวม</span></button>
+    <button class="nav-item" data-tab="members"><span class="nav-icon">👥</span><span>สมาชิก</span></button>
+    <button class="nav-item" data-tab="events"><span class="nav-icon">🎯</span><span>กิจกรรม</span></button>
+    <button class="nav-item" data-tab="board"><span class="nav-icon">🖼️</span><span>ป้ายประกาศ</span></button>
+    <button class="nav-item" data-tab="logs"><span class="nav-icon">📝</span><span>Log</span></button>
+  </nav>
+</div>
+
+<!-- Modal: Add Member -->
+<div class="modal-overlay" id="addMemberModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 class="modal-title" id="addMemberTitle">➕ เพิ่มสมาชิกใหม่</h2>
+    <form id="addMemberForm">
+      <input type="hidden" id="mUid">
+      <div class="form-group">
+        <label class="form-label">ชื่อ-นามสกุล <span style="color:var(--c-rose)">*</span></label>
+        <input class="form-input" type="text" id="mName" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">รหัสนักศึกษา <span style="color:var(--c-rose)">*</span></label>
+        <input class="form-input" type="text" id="mStudentId" required maxlength="20" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label class="form-label">หลักสูตร</label>
+        <select class="form-select" id="mProgram"><option value="">— ไม่ระบุ —</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ตำแหน่ง</label>
+        <input class="form-input" type="text" id="mPosition" placeholder="เช่น เลขานุการ">
+      </div>
+      <div class="form-group">
+        <label class="form-label">เบอร์โทรศัพท์</label>
+        <input class="form-input" type="tel" id="mPhone" inputmode="tel" placeholder="08x-xxx-xxxx">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Line ID</label>
+        <input class="form-input" type="text" id="mLineId" placeholder="@lineId หรือ lineId">
+      </div>
+      <div class="form-group" id="mPasswordGroup">
+        <label class="form-label">รหัสผ่านเริ่มต้น <span style="color:var(--c-rose)">*</span></label>
+        <input class="form-input" type="text" id="mPassword" minlength="6">
+      </div>
+      <div class="form-group">
+        <label class="form-label">สิทธิ์</label>
+        <select class="form-select" id="mRole">
+          <option value="member">สมาชิก</option>
+          <option value="committee">คณะกรรมการ</option>
+          <option value="vice_admin">รองประธาน</option>
+          <option value="admin">ประธาน / แอดมิน</option>
+        </select>
+      </div>
+      <div id="addMemberError" class="login-error" style="display:none;"></div>
+      <div class="flex gap-8">
+        <button type="button" class="btn btn-ghost w-full" id="cancelAddMember">ยกเลิก</button>
+        <button type="submit" class="btn btn-primary w-full" id="addMemberSubmit">✅ บันทึก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Create/Edit Event -->
+<div class="modal-overlay" id="eventModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 class="modal-title" id="eventModalTitle">🎯 สร้างกิจกรรม</h2>
+    <form id="eventForm">
+      <input type="hidden" id="evId">
+      <div class="form-group">
+        <label class="form-label">ชื่อกิจกรรม <span style="color:var(--c-rose)">*</span></label>
+        <input class="form-input" type="text" id="evTitle" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">รายละเอียด</label>
+        <textarea class="form-textarea" id="evDesc" rows="3"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">วันที่ <span style="color:var(--c-rose)">*</span></label>
+          <input class="form-input" type="date" id="evDate" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ชั่วโมง <span style="color:var(--c-rose)">*</span></label>
+          <input class="form-input" type="number" id="evHours" min="0.5" max="24" step="0.5" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">สถานที่</label>
+        <input class="form-input" type="text" id="evLocation">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ตำแหน่งงาน <span style="font-weight:400;font-size:.8rem;color:var(--text-3)">(ไม่บังคับ — ถ้าไม่ระบุจะรับทุกคน)</span></label>
+        <div id="positionsList" style="margin-bottom:6px;"></div>
+        <button type="button" class="btn btn-xs btn-ghost" onclick="addPositionRow()">+ เพิ่มตำแหน่ง</button>
+      </div>
+      <div id="eventError" class="login-error" style="display:none;"></div>
+      <div class="flex gap-8">
+        <button type="button" class="btn btn-ghost w-full" id="cancelEvent">ยกเลิก</button>
+        <button type="submit" class="btn btn-primary w-full" id="eventSubmit">✅ บันทึก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Post News -->
+<div class="modal-overlay" id="newsModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 class="modal-title">📢 ลงประกาศใหม่</h2>
+    <form id="newsForm">
+      <div class="form-group">
+        <label class="form-label">หัวข้อ <span style="color:var(--c-rose)">*</span></label>
+        <input class="form-input" type="text" id="nTitle" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">เนื้อหา <span style="color:var(--c-rose)">*</span></label>
+        <textarea class="form-textarea" id="nContent" rows="4" required></textarea>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:.9rem;">
+          <input type="checkbox" id="nUrgent" style="width:18px;height:18px;accent-color:var(--c-rose);">
+          <span>⚠️ ข่าวด่วน / สำคัญ</span>
+        </label>
+      </div>
+      <div class="flex gap-8">
+        <button type="button" class="btn btn-ghost w-full" id="cancelNews">ยกเลิก</button>
+        <button type="submit" class="btn btn-primary w-full" id="newsSubmit">📤 ลงประกาศ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Banner -->
+<div class="modal-overlay" id="bannerModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 class="modal-title" id="bannerModalTitle">🖼️ เพิ่มป้ายประกาศ</h2>
+    <form id="bannerForm">
+      <input type="hidden" id="bId">
+      <div class="form-group">
+        <label class="form-label">หัวข้อ <span style="color:var(--c-rose)">*</span></label>
+        <input class="form-input" type="text" id="bTitle" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">รูปภาพ (URL)</label>
+        <input class="form-input" type="url" id="bImageUrl" placeholder="https://...">
+        <div id="bImagePreview" style="margin-top:8px;"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">คำอธิบาย</label>
+        <textarea class="form-textarea" id="bDesc" rows="3" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:.9rem;">
+          <input type="checkbox" id="bActive" checked style="width:18px;height:18px;accent-color:var(--c-indigo-500);">
+          <span>แสดงป้ายนี้</span>
+        </label>
+      </div>
+      <div class="flex gap-8">
+        <button type="button" class="btn btn-ghost w-full" id="cancelBanner">ยกเลิก</button>
+        <button type="submit" class="btn btn-primary w-full" id="bannerSubmit">✅ บันทึก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Event Participations -->
+<div class="modal-overlay" id="eventDetailModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 class="modal-title" id="eventDetailTitle">รายชื่อผู้เข้าร่วม</h2>
+    <div id="eventDetailContent"></div>
+    <button class="btn btn-ghost w-full mt-12" id="closeEventDetail">ปิด</button>
+  </div>
+</div>
+
+<!-- Modal: Admin Profile -->
+<div class="modal-overlay" id="adminProfileModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="adminProfileContent"></div>
+    <div class="flex gap-8 mt-12">
+      <button class="btn btn-ghost w-full" onclick="document.getElementById('adminProfileModal').classList.remove('open')">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Admin Member Card -->
+<div class="modal-overlay" id="adminMemberCardModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="adminMemberCardContent"></div>
+    <button class="btn btn-ghost w-full mt-12" onclick="document.getElementById('adminMemberCardModal').classList.remove('open')">ปิด</button>
+  </div>
+</div>
+
+<!-- Modal: Profile Request Review -->
+<div class="modal-overlay" id="profileRequestModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 class="modal-title">✏️ คำขอแก้ไขโปรไฟล์</h2>
+    <div id="profileRequestContent"></div>
+    <button class="btn btn-ghost w-full mt-12" onclick="document.getElementById('profileRequestModal').classList.remove('open')">ปิด</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/admin.js?v=2025061401"></script>
+</body>
+</html>

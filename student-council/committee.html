@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#059669">
+  <title>กิจการนักศึกษา — คณะกรรมการ</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="กิจการนักศึกษา">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .committee-topbar { background: linear-gradient(135deg,#065f46,#059669); }
+    .committee-topbar .topbar-title,
+    .committee-topbar .topbar-subtitle { color: #fff; }
+    .committee-topbar .topbar-subtitle { color: rgba(255,255,255,.7); }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+  <header class="topbar committee-topbar">
+    <div class="topbar-left">
+      <div class="topbar-icon">🏅</div>
+      <div>
+        <div class="topbar-title">คณะกรรมการ</div>
+        <div class="topbar-subtitle" id="committeeSubtitle">กิจการนักศึกษา</div>
+      </div>
+    </div>
+    <button class="btn btn-xs" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);" id="logoutBtn">ออกจากระบบ</button>
+  </header>
+
+  <main class="main-content" id="mainContent">
+    <div class="spinner-wrap"><div class="spinner"></div></div>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="overview"><span class="nav-icon">📊</span><span>ภาพรวม</span></button>
+    <button class="nav-item" data-tab="team"><span class="nav-icon">👥</span><span>ทีมฉัน</span></button>
+    <button class="nav-item" data-tab="events"><span class="nav-icon">🎯</span><span>กิจกรรม</span></button>
+    <button class="nav-item" data-tab="board"><span class="nav-icon">🖼️</span><span>ป้ายประกาศ</span></button>
+  </nav>
+</div>
+
+<!-- Modal: Banner -->
+<div class="modal-overlay" id="bannerModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 class="modal-title" id="bannerModalTitle">🖼️ เพิ่มป้ายประกาศ</h2>
+    <form id="bannerForm">
+      <input type="hidden" id="bId">
+      <div class="form-group">
+        <label class="form-label">หัวข้อ <span style="color:var(--c-rose)">*</span></label>
+        <input class="form-input" type="text" id="bTitle" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">รูปภาพ (URL)</label>
+        <input class="form-input" type="url" id="bImageUrl" placeholder="https://...">
+        <div id="bImagePreview" style="margin-top:8px;"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">คำอธิบาย</label>
+        <textarea class="form-textarea" id="bDesc" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:.9rem;">
+          <input type="checkbox" id="bActive" checked style="width:18px;height:18px;accent-color:var(--c-indigo-500);">
+          <span>แสดงป้ายนี้</span>
+        </label>
+      </div>
+      <div class="flex gap-8">
+        <button type="button" class="btn btn-ghost w-full" id="cancelBanner">ยกเลิก</button>
+        <button type="submit" class="btn btn-primary w-full" id="bannerSubmit">✅ บันทึก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Add Position to Event -->
+<div class="modal-overlay" id="addPositionModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 class="modal-title">📌 เพิ่มตำแหน่งงาน</h2>
+    <div id="addPositionEventName" style="font-size:.82rem;color:var(--text-2);margin-bottom:14px;"></div>
+    <input type="hidden" id="addPosEventId">
+    <div id="existingPositions" style="margin-bottom:12px;"></div>
+    <div class="form-group">
+      <label class="form-label">ชื่อตำแหน่งใหม่ <span style="color:var(--c-rose)">*</span></label>
+      <input class="form-input" type="text" id="newPosName" placeholder="เช่น ช่างภาพ, พิธีกร">
+    </div>
+    <div class="form-group">
+      <label class="form-label">จำนวนที่รับ (คน) <span style="color:var(--c-rose)">*</span></label>
+      <input class="form-input" type="number" id="newPosSlots" min="1" max="999" value="1">
+    </div>
+    <div class="flex gap-8">
+      <button type="button" class="btn btn-ghost w-full" id="cancelAddPos">ยกเลิก</button>
+      <button type="button" class="btn btn-primary w-full" id="confirmAddPos">✅ เพิ่มตำแหน่ง</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Event Detail -->
+<div class="modal-overlay" id="eventJoinModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 class="modal-title" id="joinEventTitle">เข้าร่วมกิจกรรม</h2>
+    <div id="joinEventContent"></div>
+    <div class="flex gap-8 mt-12">
+      <button class="btn btn-ghost w-full" id="cancelJoin">ปิด</button>
+      <button class="btn btn-primary w-full" id="confirmJoinBtn" style="display:none;">✅ ยืนยันเข้าร่วม</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/committee.js?v=2025061306"></script>
+</body>
+</html>

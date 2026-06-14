@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#4f46e5">
+  <title>กิจการนักศึกษา</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="กิจการนักศึกษา">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-icon">🎓</div>
+      <div>
+        <div class="topbar-title">กิจการนักศึกษา</div>
+        <div class="topbar-subtitle" id="topbarSub">กำลังโหลด…</div>
+      </div>
+    </div>
+    <div class="topbar-avatar" id="avatarBtn" title="โปรไฟล์">?</div>
+  </header>
+
+  <main class="main-content" id="mainContent">
+    <div class="spinner-wrap"><div class="spinner"></div></div>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="home"><span class="nav-icon">🏠</span><span>หน้าหลัก</span></button>
+    <button class="nav-item" data-tab="events"><span class="nav-icon">🎯</span><span>กิจกรรม</span></button>
+    <button class="nav-item" data-tab="history"><span class="nav-icon">📋</span><span>ประวัติ</span></button>
+    <button class="nav-item" data-tab="news"><span class="nav-icon">📢</span><span>ข่าวสาร</span></button>
+  </nav>
+</div>
+
+<!-- Modal: Profile -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="profileContent"></div>
+    <div class="flex gap-8 mt-12">
+      <button class="btn btn-ghost w-full" id="closeProfile">ปิด</button>
+      <button class="btn btn-danger w-full" id="logoutBtn">ออกจากระบบ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Hours Breakdown -->
+<div class="modal-overlay" id="hoursModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 class="modal-title">⏱️ ชั่วโมงสะสม</h2>
+    <div id="hoursContent"></div>
+    <button class="btn btn-ghost w-full mt-12" id="closeHours">ปิด</button>
+  </div>
+</div>
+
+<!-- Modal: Member Card -->
+<div class="modal-overlay" id="memberCardModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="memberCardContent"></div>
+    <button class="btn btn-ghost w-full mt-12" id="closeMemberCard">ปิด</button>
+  </div>
+</div>
+
+<!-- Modal: Join Event -->
+<div class="modal-overlay" id="joinModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 class="modal-title" id="joinModalTitle">เข้าร่วมกิจกรรม</h2>
+    <div id="joinModalContent"></div>
+    <div class="flex gap-8 mt-12">
+      <button class="btn btn-ghost w-full" id="cancelJoin">ยกเลิก</button>
+      <button class="btn btn-primary w-full" id="confirmJoinBtn">✅ ยืนยันเข้าร่วม</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/dashboard.js?v=2025061401"></script>
+</body>
+</html>

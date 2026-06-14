@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1f5c">
+  <title>กิจการนักศึกษา — เข้าสู่ระบบ</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="กิจการนักศึกษา">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .tab-switch { display:flex; gap:0; background:rgba(255,255,255,.12); border-radius:12px; padding:4px; margin-bottom:22px; }
+    .tab-switch-btn { flex:1; padding:9px; border:none; background:transparent; color:rgba(255,255,255,.7); font-family:inherit; font-size:.88rem; font-weight:700; border-radius:9px; cursor:pointer; transition:all .18s; }
+    .tab-switch-btn.active { background:rgba(255,255,255,.95); color:#0d1f5c; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+    .form-section { display:none; }
+    .form-section.active { display:block; }
+    .login-logo-img { width:88px; height:88px; border-radius:50%; object-fit:cover; border:3px solid rgba(200,150,12,.6); margin-bottom:10px; background:rgba(255,255,255,.1); }
+    .logo-fallback { width:88px; height:88px; border-radius:50%; background:rgba(255,255,255,.15); border:3px solid rgba(200,150,12,.5); display:flex; align-items:center; justify-content:center; font-size:2.4rem; margin-bottom:10px; }
+    .reg-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  </style>
+</head>
+<body>
+
+<div class="login-page">
+  <div class="login-glass fade-in">
+
+    <!-- Logo + Title -->
+    <div class="login-logo-wrap">
+      <img src="icons/logo.png" class="login-logo-img" alt="logo"
+           onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex'">
+      <div class="logo-fallback" id="logoFallback" style="display:none;">🎓</div>
+      <div style="font-size:.65rem;letter-spacing:.08em;color:rgba(255,255,255,.6);text-align:center;margin-bottom:2px;">คณะมนุษยศาสตร์และสังคมศาสตร์</div>
+      <div style="font-size:.6rem;letter-spacing:.06em;color:rgba(255,255,255,.5);text-align:center;margin-bottom:8px;">มหาวิทยาลัยสวนดุสิต</div>
+      <h1 class="login-title">กิจการนักศึกษา</h1>
+      <p class="login-sub">ระบบบริหารจัดการองค์กร</p>
+    </div>
+
+    <!-- Tab switch -->
+    <div class="tab-switch">
+      <button class="tab-switch-btn active" onclick="switchTab('login')">เข้าสู่ระบบ</button>
+      <button class="tab-switch-btn" onclick="switchTab('register')">สมัครสมาชิก</button>
+    </div>
+
+    <!-- ── LOGIN ── -->
+    <div class="form-section active" id="loginSection">
+      <form id="loginForm" autocomplete="on">
+        <div class="login-field">
+          <label class="login-label" for="studentId">รหัสนักศึกษา</label>
+          <input class="login-input" type="text" id="studentId"
+                 placeholder="เช่น 6501234567890"
+                 maxlength="20" required autocomplete="username" inputmode="numeric">
+        </div>
+        <div class="login-field">
+          <label class="login-label" for="password">รหัสผ่าน</label>
+          <input class="login-input" type="password" id="password"
+                 placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <div class="login-error" id="loginError"></div>
+        <button class="login-btn" type="submit" id="loginBtn">
+          <span id="loginBtnText">เข้าสู่ระบบ</span>
+        </button>
+      </form>
+      <p class="login-hint">ลืมรหัสผ่าน? ติดต่อประธานกิจการนักศึกษา</p>
+    </div>
+
+    <!-- ── REGISTER ── -->
+    <div class="form-section" id="registerSection">
+      <form id="registerForm" autocomplete="off">
+        <div class="login-field">
+          <label class="login-label">รหัสนักศึกษา <span style="color:#f0c040">*</span> <span style="font-weight:400;font-size:.75rem;opacity:.7;">(13 หลัก)</span></label>
+          <input class="login-input" type="text" id="rStudentId"
+                 placeholder="เช่น 6701234567890"
+                 maxlength="13" inputmode="numeric" required>
+        </div>
+        <div class="login-field">
+          <label class="login-label">ชื่อ-นามสกุล <span style="color:#f0c040">*</span></label>
+          <input class="login-input" type="text" id="rName" placeholder="ชื่อ นามสกุล" required>
+        </div>
+        <div class="login-field">
+          <label class="login-label">หลักสูตร</label>
+          <select class="login-input" id="rProgram" style="appearance:auto;">
+            <option value="">— ไม่ระบุ —</option>
+          </select>
+        </div>
+        <div class="reg-row">
+          <div class="login-field" style="margin-bottom:0">
+            <label class="login-label">เบอร์โทรศัพท์</label>
+            <input class="login-input" type="tel" id="rPhone" placeholder="08x-xxx-xxxx" inputmode="tel">
+          </div>
+          <div class="login-field" style="margin-bottom:0">
+            <label class="login-label">Line ID</label>
+            <input class="login-input" type="text" id="rLineId" placeholder="lineId">
+          </div>
+        </div>
+        <div class="login-field" style="margin-top:12px;">
+          <label class="login-label">รหัสผ่าน <span style="color:#f0c040">*</span> <span style="font-weight:400;font-size:.75rem;opacity:.7;">(อย่างน้อย 6 ตัว)</span></label>
+          <input class="login-input" type="password" id="rPassword" placeholder="ตั้งรหัสผ่าน" minlength="6" required>
+        </div>
+        <div class="login-field">
+          <label class="login-label">ยืนยันรหัสผ่าน <span style="color:#f0c040">*</span></label>
+          <input class="login-input" type="password" id="rPassword2" placeholder="พิมพ์รหัสผ่านอีกครั้ง" required>
+        </div>
+        <div class="login-error" id="registerError"></div>
+        <button class="login-btn" type="submit" id="registerBtn">
+          <span id="registerBtnText">✅ สมัครสมาชิก</span>
+        </button>
+      </form>
+      <p class="login-hint">หลังสมัครแล้ว สามารถเข้าสู่ระบบได้ทันที</p>
+    </div>
+
+  </div>
+  <p class="login-footer">ระบบบริหารจัดการกิจการนักศึกษา · v2.0</p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
+  // Populate program select
+  (function() {
+    const sel = document.getElementById('rProgram');
+    if (typeof PROGRAMS !== 'undefined') {
+      PROGRAMS.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o); });
+    }
+  })();
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-switch-btn').forEach((b,i) => b.classList.toggle('active', (i===0) === (tab==='login')));
+    document.getElementById('loginSection').classList.toggle('active', tab==='login');
+    document.getElementById('registerSection').classList.toggle('active', tab==='register');
+  }
+
+  const DEMO = FIREBASE_CONFIG.apiKey.startsWith('REPLACE');
+
+  if (!DEMO) {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
+
+    auth.onAuthStateChanged(async user => {
+      if (!user) return;
+      try {
+        const snap = await db.collection('users').doc(user.uid).get();
+        if (!snap.exists) return;
+        const role = snap.data().role;
+        if (role === 'admin' || role === 'vice_admin') window.location.replace('admin.html');
+        else if (role === 'committee')                 window.location.replace('committee.html');
+        else                                           window.location.replace('dashboard.html');
+      } catch(_) {}
+    });
+
+    // ── Login ──
+    document.getElementById('loginForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const id  = document.getElementById('studentId').value.trim();
+      const pw  = document.getElementById('password').value;
+      const btn = document.getElementById('loginBtn');
+      const err = document.getElementById('loginError');
+      btn.disabled = true;
+      document.getElementById('loginBtnText').textContent = 'กำลังเข้าสู่ระบบ…';
+      err.style.display = 'none';
+      try {
+        sessionStorage.removeItem('localUser');
+        await auth.signInWithEmailAndPassword(id + AUTH_DOMAIN_SUFFIX, pw);
+      } catch(ex) {
+        const localUser = (typeof LOCAL_USERS !== 'undefined')
+          ? LOCAL_USERS.find(u => u.studentId === id && u.password === pw) : null;
+        if (localUser) {
+          sessionStorage.setItem('localUser', JSON.stringify(localUser));
+          const dest = localUser.role==='admin'?'admin.html':localUser.role==='committee'?'committee.html':'dashboard.html';
+          window.location.href = dest; return;
+        }
+        const msgs = {
+          'auth/user-not-found':    'ไม่พบรหัสนักศึกษานี้ในระบบ',
+          'auth/wrong-password':    'รหัสผ่านไม่ถูกต้อง',
+          'auth/invalid-credential':'รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง',
+          'auth/invalid-email':     'รหัสนักศึกษาไม่ถูกต้อง',
+          'auth/too-many-requests': 'ลองหลายครั้งเกินไป กรุณารอสักครู่',
+        };
+        err.textContent = msgs[ex.code] || 'รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง';
+        err.style.display = 'block';
+        btn.disabled = false;
+        document.getElementById('loginBtnText').textContent = 'เข้าสู่ระบบ';
+      }
+    });
+
+    // ── Register ──
+    document.getElementById('registerForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const sid   = document.getElementById('rStudentId').value.trim();
+      const name  = document.getElementById('rName').value.trim();
+      const prog  = document.getElementById('rProgram').value;
+      const phone = document.getElementById('rPhone').value.trim();
+      const lineId= document.getElementById('rLineId').value.trim();
+      const pw    = document.getElementById('rPassword').value;
+      const pw2   = document.getElementById('rPassword2').value;
+      const btn   = document.getElementById('registerBtn');
+      const err   = document.getElementById('registerError');
+
+      err.style.display = 'none';
+
+      if (sid.length !== 13 || !/^\d+$/.test(sid)) {
+        err.textContent = 'รหัสนักศึกษาต้องเป็นตัวเลข 13 หลัก'; err.style.display = 'block'; return;
+      }
+      if (!name) { err.textContent = 'กรุณากรอกชื่อ-นามสกุล'; err.style.display = 'block'; return; }
+      if (pw.length < 6) { err.textContent = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'; err.style.display = 'block'; return; }
+      if (pw !== pw2) { err.textContent = 'รหัสผ่านไม่ตรงกัน'; err.style.display = 'block'; return; }
+
+      btn.disabled = true;
+      document.getElementById('registerBtnText').textContent = 'กำลังสมัคร…';
+
+      try {
+        // ตรวจสอบว่ารหัสนักศึกษาซ้ำหรือเปล่า
+        const existing = await db.collection('users').where('studentId','==',sid).get();
+        if (!existing.empty) {
+          err.textContent = 'รหัสนักศึกษานี้ถูกใช้งานแล้ว'; err.style.display = 'block';
+          btn.disabled = false; document.getElementById('registerBtnText').textContent = '✅ สมัครสมาชิก'; return;
+        }
+
+        const cred = await auth.createUserWithEmailAndPassword(sid + AUTH_DOMAIN_SUFFIX, pw);
+        await db.collection('users').doc(cred.user.uid).set({
+          studentId: sid,
+          name:      name,
+          program:   prog,
+          phone:     phone,
+          lineId:    lineId,
+          role:      'member',
+          position:  '',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        // onAuthStateChanged จะ redirect ไป dashboard.html อัตโนมัติ
+      } catch(ex) {
+        const msgs = {
+          'auth/email-already-in-use': 'รหัสนักศึกษานี้ถูกใช้งานแล้ว',
+          'auth/weak-password':        'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร',
+          'auth/invalid-email':        'รหัสนักศึกษาไม่ถูกต้อง',
+        };
+        err.textContent = msgs[ex.code] || ('เกิดข้อผิดพลาด: ' + ex.message);
+        err.style.display = 'block';
+        btn.disabled = false;
+        document.getElementById('registerBtnText').textContent = '✅ สมัครสมาชิก';
+      }
+    });
+
+  } else {
+    document.getElementById('loginForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const id  = document.getElementById('studentId').value.trim();
+      const pw  = document.getElementById('password').value;
+      const err = document.getElementById('loginError');
+      const user = (typeof LOCAL_USERS !== 'undefined')
+        ? LOCAL_USERS.find(u => u.studentId === id && u.password === pw) : null;
+      if (user) {
+        window.location.href = user.role==='admin'?'admin.html':user.role==='committee'?'committee.html':'dashboard.html';
+      } else {
+        err.textContent = 'รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง';
+        err.style.display = 'block';
+      }
+    });
+  }
+</script>
+</body>
+</html>

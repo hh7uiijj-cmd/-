@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ตั้งค่าระบบ — กิจการนักศึกษา</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    body { background: var(--bg); max-width: 680px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    .wizard-header {
+      background: var(--grad-hero);
+      border-radius: var(--radius-lg);
+      padding: 28px 24px;
+      color: #fff;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .wizard-header::before {
+      content:''; position:absolute; width:180px; height:180px;
+      background:rgba(255,255,255,.07); border-radius:50%;
+      top:-60px; right:-40px;
+    }
+    .wh-title { font-size:1.4rem; font-weight:800; margin-bottom:4px; }
+    .wh-sub   { font-size:.85rem; opacity:.8; }
+
+    .step-list { counter-reset: step; }
+
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 12px;
+      position: relative;
+      counter-increment: step;
+      box-shadow: var(--shadow-sm);
+    }
+    .step.done  { border-color: rgba(16,185,129,.4); background: rgba(16,185,129,.04); }
+    .step.active{ border-color: var(--c-indigo-500); box-shadow: 0 0 0 3px rgba(99,102,241,.1), var(--shadow-sm); }
+
+    .step-num {
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--c-indigo-500);
+      color: #fff;
+      font-size: .8rem;
+      font-weight: 800;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    .step.done .step-num { background: var(--c-emerald); }
+
+    .step-title {
+      font-size: 1rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .step-body { font-size: .88rem; color: var(--text-2); line-height: 1.7; }
+
+    .step-img {
+      width: 100%;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      margin: 12px 0;
+      background: var(--surface2);
+    }
+
+    .instruction {
+      background: var(--surface2);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin: 10px 0;
+      border-left: 3px solid var(--c-indigo-500);
+      font-size: .85rem;
+      line-height: 1.7;
+    }
+    .instruction ol, .instruction ul { padding-left: 20px; margin: 6px 0; }
+    .instruction li { margin-bottom: 4px; }
+
+    .link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      background: var(--grad-primary);
+      color: #fff;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: .88rem;
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(79,70,229,.3);
+      transition: all .15s;
+      margin: 8px 0;
+    }
+    .link-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,.4); }
+
+    .code-block {
+      background: #1e1b4b;
+      color: #e0e7ff;
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      font-family: 'Courier New', monospace;
+      font-size: .8rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      margin: 10px 0;
+      position: relative;
+    }
+    .code-val { color: #86efac; }
+    .code-key { color: #93c5fd; }
+    .code-str { color: #fde68a; }
+
+    /* Config form */
+    .config-form .form-group { margin-bottom: 10px; }
+    .config-form .form-label { font-size: .8rem; color: var(--text-3); margin-bottom: 3px; font-weight: 600; }
+    .config-form .form-input { font-family: 'Courier New', monospace; font-size: .82rem; }
+
+    .check-icon { color: var(--c-emerald); font-size: 1rem; }
+
+    .result-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-top: 12px;
+    }
+
+    .collapse-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: .82rem; color: var(--c-indigo-500); font-family: inherit;
+      font-weight: 700; padding: 0; margin-top: 6px;
+    }
+
+    .collapsible { display: none; }
+    .collapsible.open { display: block; }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(99,102,241,.1); color: var(--c-indigo-600);
+      padding: 3px 10px; border-radius: 20px;
+      font-size: .75rem; font-weight: 700;
+    }
+    .pill.success { background: rgba(16,185,129,.1); color: var(--c-emerald); }
+
+    .progress-bar {
+      height: 4px;
+      background: var(--surface2);
+      border-radius: 2px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--grad-primary);
+      border-radius: 2px;
+      transition: width .4s ease;
+    }
+
+    .alert-info {
+      background: rgba(99,102,241,.08);
+      border: 1px solid rgba(99,102,241,.2);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: .83rem;
+      color: var(--c-indigo-700);
+      margin: 10px 0;
+      line-height: 1.6;
+    }
+    @media (prefers-color-scheme: dark) {
+      .alert-info { color: var(--c-indigo-400); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wizard-header">
+  <div class="wh-title">🚀 ตั้งค่าระบบกิจการนักศึกษา</div>
+  <div class="wh-sub">ทำตามขั้นตอนด้านล่าง ใช้เวลาประมาณ 10–15 นาที</div>
+</div>
+
+<!-- Progress -->
+<div class="progress-bar">
+  <div class="progress-fill" id="progressFill" style="width:0%"></div>
+</div>
+
+<div class="step-list" id="stepList">
+
+  <!-- STEP 1: Create Firebase Project -->
+  <div class="step active" id="step1">
+    <div class="step-title"><span class="step-num">1</span> สร้าง Firebase Project</div>
+    <div class="step-body">
+      <p>Firebase เป็นบริการ Cloud ฟรีของ Google สำหรับเก็บข้อมูลและจัดการผู้ใช้</p>
+
+      <div class="instruction">
+        <ol>
+          <li>คลิกปุ่มด้านล่างเพื่อเปิด Firebase Console (ต้อง Sign in ด้วย Google account)</li>
+          <li>กด <strong>Add project</strong> หรือ <strong>Create a project</strong></li>
+          <li>ตั้งชื่อ project เช่น <code style="background:var(--surface3);padding:1px 5px;border-radius:4px;">student-council</code></li>
+          <li>ปิด Google Analytics ได้ (ไม่จำเป็น) → <strong>Create project</strong></li>
+          <li>รอสักครู่จนเสร็จ → <strong>Continue</strong></li>
+        </ol>
+      </div>
+
+      <a href="https://console.firebase.google.com" target="_blank" class="link-btn">
+        🔥 เปิด Firebase Console
+      </a>
+
+      <button class="btn btn-success btn-sm mt-12" onclick="markDone(1)">
+        ✅ สร้าง Project แล้ว — ถัดไป
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Enable Auth -->
+  <div class="step" id="step2">
+    <div class="step-title"><span class="step-num">2</span> เปิดใช้งาน Authentication</div>
+    <div class="step-body">
+      <div class="instruction">
+        <ol>
+          <li>ใน Firebase Console → เมนูซ้าย เลือก <strong>Authentication</strong></li>
+          <li>กด <strong>Get started</strong></li>
+          <li>แท็บ <strong>Sign-in method</strong> → คลิก <strong>Email/Password</strong></li>
+          <li>เปิด Enable → <strong>Save</strong></li>
+        </ol>
+      </div>
+      <div class="alert-info">
+        💡 ระบบจะใช้ Email/Password โดยอีเมลจะเป็น <code>รหัสนักศึกษา@student-council.app</code> (ผู้ใช้จะไม่เห็นอีเมลจริง เห็นแค่รหัสนักศึกษา)
+      </div>
+      <button class="btn btn-success btn-sm" onclick="markDone(2)">✅ เปิด Auth แล้ว — ถัดไป</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Enable Firestore -->
+  <div class="step" id="step3">
+    <div class="step-title"><span class="step-num">3</span> สร้าง Firestore Database</div>
+    <div class="step-body">
+      <div class="instruction">
+        <ol>
+          <li>เมนูซ้าย → <strong>Firestore Database</strong> → <strong>Create database</strong></li>
+          <li>เลือก <strong>Start in production mode</strong> → Next</li>
+          <li>เลือก Location: <strong>asia-southeast1 (Singapore)</strong> → <strong>Enable</strong></li>
+          <li>รอจนสร้างเสร็จ</li>
+          <li>ไปที่แท็บ <strong>Rules</strong> → ลบทุกอย่างแล้ว paste โค้ดด้านล่าง → <strong>Publish</strong></li>
+        </ol>
+      </div>
+      <div class="code-block" id="rulesCode">
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow write: if isAdmin();
+    }
+    match /workLogs/{id} {
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+    match /news/{id} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+    match /fcmTokens/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /notifications/{id} {
+      allow read, write: if isAdmin();
+    }
+    function isAdmin() {
+      return request.auth != null &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}</div>
+      <button class="btn btn-ghost btn-sm mt-8" onclick="copyRules()">📋 Copy Rules</button>
+      <button class="btn btn-success btn-sm" onclick="markDone(3)">✅ ตั้ง Firestore แล้ว — ถัดไป</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Get Config -->
+  <div class="step" id="step4">
+    <div class="step-title"><span class="step-num">4</span> รับ Firebase Config</div>
+    <div class="step-body">
+      <div class="instruction">
+        <ol>
+          <li>คลิกไอคอน ⚙️ (Project Settings) ด้านบนซ้ายของ Console</li>
+          <li>แท็บ <strong>General</strong> → เลื่อนลงหา <strong>Your apps</strong></li>
+          <li>กดไอคอน <strong>&lt;/&gt;</strong> (Web app)</li>
+          <li>ตั้งชื่อ app (เช่น <code style="background:var(--surface3);padding:1px 5px;border-radius:4px;">web</code>) → <strong>Register app</strong></li>
+          <li>Copy ค่าในส่วน <code>firebaseConfig = { ... }</code></li>
+        </ol>
+      </div>
+      <p style="font-weight:700;margin:14px 0 8px;font-size:.88rem;">ใส่ค่าจาก firebaseConfig ที่ได้มา:</p>
+      <div class="config-form">
+        <div class="form-group">
+          <label class="form-label">apiKey</label>
+          <input class="form-input" id="cfg_apiKey" placeholder="AIzaSy..." oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">authDomain</label>
+          <input class="form-input" id="cfg_authDomain" placeholder="your-project.firebaseapp.com" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">projectId</label>
+          <input class="form-input" id="cfg_projectId" placeholder="your-project-id" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">storageBucket</label>
+          <input class="form-input" id="cfg_storageBucket" placeholder="your-project.appspot.com" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">messagingSenderId</label>
+          <input class="form-input" id="cfg_messagingSenderId" placeholder="123456789" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">appId</label>
+          <input class="form-input" id="cfg_appId" placeholder="1:123:web:abc..." oninput="updatePreview()">
+        </div>
+      </div>
+      <div id="configPreview" style="display:none;">
+        <p style="font-weight:700;font-size:.85rem;margin:12px 0 6px;">Preview ไฟล์ config.js:</p>
+        <div class="code-block" id="configCode"></div>
+        <button class="btn btn-primary btn-sm mt-8" onclick="downloadConfig()">⬇️ ดาวน์โหลด config.js</button>
+      </div>
+      <button class="btn btn-success btn-sm mt-12" id="step4Btn" onclick="markDone(4)" disabled>✅ ใส่ config แล้ว — ถัดไป</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: Create Admin Account -->
+  <div class="step" id="step5">
+    <div class="step-title"><span class="step-num">5</span> สร้างบัญชีประธาน (Admin)</div>
+    <div class="step-body">
+      <div class="instruction">
+        <strong>วิธีที่ 1 (แนะนำ): สร้างผ่าน Firebase Console</strong>
+        <ol style="margin-top:6px;">
+          <li>ไปที่ <strong>Authentication</strong> → แท็บ <strong>Users</strong> → <strong>Add user</strong></li>
+          <li>Email: <code id="adminEmailPreview" style="background:var(--surface3);padding:1px 6px;border-radius:4px;">6501234567@student-council.app</code></li>
+          <li>Password: ตั้งรหัสผ่านของคุณ (อย่างน้อย 6 ตัว)</li>
+          <li>กด <strong>Add user</strong> → Copy UID ที่แสดง</li>
+          <li>ไปที่ <strong>Firestore</strong> → <strong>users</strong> collection → <strong>Add document</strong></li>
+          <li>Document ID: วาง UID → เพิ่ม fields ด้านล่าง</li>
+        </ol>
+      </div>
+
+      <div class="form-group mt-12">
+        <label class="form-label" style="font-size:.88rem;">รหัสนักศึกษา (ประธาน)</label>
+        <input class="form-input" id="adminStudentId" placeholder="เช่น 6501234567"
+               oninput="document.getElementById('adminEmailPreview').textContent=this.value+'@student-council.app'">
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="font-size:.88rem;">ชื่อ-นามสกุล</label>
+        <input class="form-input" id="adminName" placeholder="เช่น สมชาย ใจดี">
+      </div>
+
+      <p style="font-weight:700;font-size:.85rem;margin:14px 0 6px;">Fields ที่ต้องเพิ่มใน Firestore document:</p>
+      <div class="code-block" id="firestoreFields">
+{
+  <span class="code-key">"studentId"</span>: <span class="code-str" id="fsStudentId">"6501234567"</span>,
+  <span class="code-key">"name"</span>: <span class="code-str" id="fsName">"ชื่อ-นามสกุลของคุณ"</span>,
+  <span class="code-key">"position"</span>: <span class="code-str">"ประธานกิจการนักศึกษา"</span>,
+  <span class="code-key">"role"</span>: <span class="code-str">"admin"</span>,
+  <span class="code-key">"email"</span>: <span class="code-str" id="fsEmail">"6501234567@student-council.app"</span>
+}</div>
+      <button class="btn btn-ghost btn-sm mt-8" onclick="copyAdminFields()">📋 Copy Fields</button>
+      <button class="btn btn-success btn-sm" onclick="markDone(5)">✅ สร้าง Admin แล้ว — ถัดไป</button>
+    </div>
+  </div>
+
+  <!-- STEP 6: Replace config.js -->
+  <div class="step" id="step6">
+    <div class="step-title"><span class="step-num">6</span> ใส่ config.js เข้าโฟลเดอร์</div>
+    <div class="step-body">
+      <div class="instruction">
+        <ol>
+          <li>เปิดโฟลเดอร์ <code style="background:var(--surface3);padding:1px 5px;border-radius:4px;">student-council/js/</code></li>
+          <li>แทนที่ไฟล์ <code style="background:var(--surface3);padding:1px 5px;border-radius:4px;">config.js</code> ด้วยไฟล์ที่ดาวน์โหลดมาจากขั้นตอน 4</li>
+          <li>หรือเปิดไฟล์ <code>config.js</code> และแก้ไขค่าด้วยตัวเอง</li>
+        </ol>
+      </div>
+      <div id="inlineConfigEdit">
+        <p style="font-weight:700;font-size:.85rem;margin:12px 0 6px;">หรือแก้ config.js โดยตรง:</p>
+        <button class="btn btn-primary btn-sm" onclick="saveConfigToLocalStorage()">💾 บันทึก config ชั่วคราว (ทดสอบ)</button>
+      </div>
+      <button class="btn btn-success btn-sm mt-12" onclick="markDone(6)">✅ ใส่ config แล้ว — ถัดไป</button>
+    </div>
+  </div>
+
+  <!-- STEP 7: Test -->
+  <div class="step" id="step7">
+    <div class="step-title"><span class="step-num">7</span> ทดสอบการเข้าสู่ระบบ</div>
+    <div class="step-body">
+      <div class="alert-info">
+        ก่อนเปิดหน้า Login ตรวจสอบว่าไฟล์ <strong>js/config.js</strong> มีค่า Firebase จริงแล้ว (ไม่มี REPLACE_WITH...)
+      </div>
+      <a href="index.html" target="_blank" class="link-btn mt-8">
+        🚀 เปิดหน้า Login
+      </a>
+      <p class="text-sm text-muted mt-8">
+        ใช้รหัสนักศึกษาและรหัสผ่านที่ตั้งไว้ในขั้นตอน 5 เพื่อทดสอบ login
+      </p>
+      <button class="btn btn-success btn-sm mt-12" onclick="markDone(7)">✅ Login ได้แล้ว — เสร็จสิ้น!</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Done Banner -->
+<div id="doneBanner" style="display:none;" class="card" style="border:2px solid var(--c-emerald);background:rgba(16,185,129,.06);">
+  <div style="text-align:center;padding:20px;">
+    <div style="font-size:3rem;margin-bottom:8px;">🎉</div>
+    <div style="font-size:1.3rem;font-weight:800;color:var(--c-emerald);">ตั้งค่าเสร็จสมบูรณ์!</div>
+    <p class="text-muted mt-8 text-sm">ระบบกิจการนักศึกษาพร้อมใช้งานแล้ว</p>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
+      <a href="index.html" class="btn btn-primary">🚀 เริ่มใช้งาน</a>
+      <a href="admin.html" class="btn btn-outline">⭐ แผงประธาน</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  let completedSteps = new Set();
+
+  // Restore progress from localStorage
+  const saved = localStorage.getItem('setupProgress');
+  if (saved) {
+    JSON.parse(saved).forEach(s => completedSteps.add(s));
+    completedSteps.forEach(s => applyDone(s));
+  }
+  updateProgress();
+
+  // Save form values
+  const savedCfg = localStorage.getItem('setupConfig');
+  if (savedCfg) {
+    const c = JSON.parse(savedCfg);
+    Object.keys(c).forEach(k => {
+      const el = document.getElementById('cfg_' + k);
+      if (el) { el.value = c[k]; }
+    });
+    updatePreview();
+  }
+
+  function markDone(n) {
+    completedSteps.add(n);
+    applyDone(n);
+    localStorage.setItem('setupProgress', JSON.stringify([...completedSteps]));
+
+    // Activate next step
+    const next = document.getElementById('step' + (n + 1));
+    if (next) {
+      next.classList.add('active');
+      next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    if (n === 7) {
+      document.getElementById('doneBanner').style.display = 'block';
+      document.getElementById('doneBanner').scrollIntoView({ behavior: 'smooth' });
+    }
+    updateProgress();
+  }
+
+  function applyDone(n) {
+    const el = document.getElementById('step' + n);
+    if (el) { el.classList.add('done'); el.classList.remove('active'); }
+  }
+
+  function updateProgress() {
+    const pct = Math.round((completedSteps.size / 7) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+  }
+
+  function updatePreview() {
+    const keys = ['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'];
+    const vals = {};
+    let allFilled = true;
+    keys.forEach(k => {
+      const v = document.getElementById('cfg_' + k)?.value?.trim() || '';
+      vals[k] = v;
+      if (!v) allFilled = false;
+    });
+
+    localStorage.setItem('setupConfig', JSON.stringify(vals));
+
+    if (!allFilled) {
+      document.getElementById('configPreview').style.display = 'none';
+      document.getElementById('step4Btn').disabled = true;
+      return;
+    }
+
+    const code = `const FIREBASE_CONFIG = {
+  apiKey: "${vals.apiKey}",
+  authDomain: "${vals.authDomain}",
+  projectId: "${vals.projectId}",
+  storageBucket: "${vals.storageBucket}",
+  messagingSenderId: "${vals.messagingSenderId}",
+  appId: "${vals.appId}"
+};
+
+const VAPID_KEY = "REPLACE_WITH_YOUR_VAPID_KEY";
+const AUTH_DOMAIN_SUFFIX = "@student-council.app";
+const PRESIDENT_IDS = ["${document.getElementById('adminStudentId')?.value || '6501234567'}"];`;
+
+    document.getElementById('configCode').textContent = code;
+    document.getElementById('configPreview').style.display = 'block';
+    document.getElementById('step4Btn').disabled = false;
+  }
+
+  function downloadConfig() {
+    const code = document.getElementById('configCode').textContent;
+    const blob = new Blob([code], { type: 'text/javascript' });
+    Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(blob),
+      download: 'config.js'
+    }).click();
+  }
+
+  function saveConfigToLocalStorage() {
+    const code = document.getElementById('configCode')?.textContent;
+    if (!code) { alert('กรุณาใส่ config ก่อน'); return; }
+    localStorage.setItem('firebaseConfigCode', code);
+    alert('บันทึกแล้ว! สำหรับการใช้งานจริงต้องแทนที่ไฟล์ js/config.js ด้วย');
+  }
+
+  function copyRules() {
+    navigator.clipboard.writeText(document.getElementById('rulesCode').innerText)
+      .then(() => showToast('คัดลอก Rules แล้ว ✅'))
+      .catch(() => showToast('กรุณา copy ด้วยตนเอง'));
+  }
+
+  function copyAdminFields() {
+    const id   = document.getElementById('adminStudentId')?.value || '6501234567';
+    const name = document.getElementById('adminName')?.value || 'ชื่อของคุณ';
+    const json = `studentId: "${id}"\nname: "${name}"\nposition: "ประธานกิจการนักศึกษา"\nrole: "admin"\nemail: "${id}@student-council.app"`;
+    navigator.clipboard.writeText(json)
+      .then(() => showToast('คัดลอก Fields แล้ว ✅'))
+      .catch(() => showToast('กรุณา copy ด้วยตนเอง'));
+  }
+
+  // Update Firestore preview dynamically
+  document.getElementById('adminStudentId')?.addEventListener('input', e => {
+    const v = e.target.value;
+    document.getElementById('fsStudentId').textContent = `"${v}"`;
+    document.getElementById('fsEmail').textContent = `"${v}@student-council.app"`;
+    updatePreview();
+  });
+  document.getElementById('adminName')?.addEventListener('input', e => {
+    document.getElementById('fsName').textContent = `"${e.target.value}"`;
+  });
+
+  function showToast(msg) {
+    const t = Object.assign(document.createElement('div'), {
+      textContent: msg,
+      style: 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e1b4b;color:#fff;padding:10px 20px;border-radius:24px;font-size:.85rem;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.2);'
+    });
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+  }
+</script>
+</body>
+</html>
