@@ -181,6 +181,9 @@ tr:nth-child(even) td{background:var(--gray-50)}
     <button class="tab" onclick="showPanel('anova')">🔬 ANOVA</button>
     <button class="tab" onclick="showPanel('corr')">🔗 สหสัมพันธ์</button>
     <button class="tab" onclick="showPanel('chi')">✅ Chi-Square</button>
+    <button class="tab" onclick="showPanel('alpha')">🔐 Cronbach's α</button>
+    <button class="tab" onclick="showPanel('reg')">📉 Regression</button>
+    <button class="tab" onclick="showPanel('nonpar')">🔀 Nonparametric</button>
   </div>
 
   <!-- ══════════════════════════════════════════════════
@@ -382,6 +385,67 @@ tr:nth-child(even) td{background:var(--gray-50)}
     </div>
   </div>
 
+  <!-- ══════════════════════════════════════════════════
+       PANEL 8 — Cronbach's Alpha
+  ══════════════════════════════════════════════════ -->
+  <div id="panel-alpha" class="panel">
+    <div class="card">
+      <div class="card-title"><div class="icon icon-blue">🔐</div>ความเชื่อมั่น (Cronbach's Alpha)</div>
+      <p class="data-hint" style="margin-bottom:12px">ใช้สำหรับตรวจสอบความเชื่อมั่นของแบบสอบถาม (Reliability) — เลือกข้อคำถาม (ตัวเลข) ทั้งหมดที่อยู่ในมาตรวัดเดียวกัน</p>
+      <label>เลือกข้อคำถาม (Items) — ตัวเลข เลือกได้หลายตัว</label>
+      <select id="alpha-vars" multiple size="6"></select>
+      <p class="alpha-note">กด Ctrl/⌘ + แตะ เพื่อเลือกหลายข้อ</p>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="runAlpha()">▶ คำนวณ</button>
+        <button class="btn btn-outline btn-sm" onclick="selectAllAlpha()">เลือกทั้งหมด</button>
+      </div>
+      <div id="alpha-result"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PANEL 9 — Linear Regression
+  ══════════════════════════════════════════════════ -->
+  <div id="panel-reg" class="panel">
+    <div class="card">
+      <div class="card-title"><div class="icon icon-orange">📉</div>การวิเคราะห์การถดถอยเชิงเส้น (Linear Regression)</div>
+      <div class="row row-2" style="margin-bottom:14px">
+        <div>
+          <label>ตัวแปรตาม — Y (Dependent)</label>
+          <select id="reg-dep"></select>
+        </div>
+      </div>
+      <label>ตัวแปรอิสระ — X (Independent) เลือกได้หลายตัว</label>
+      <select id="reg-ind" multiple size="5"></select>
+      <p class="alpha-note">Multiple Regression: เลือก X หลายตัว | Simple: เลือก 1 ตัว</p>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="runReg()">▶ คำนวณ</button>
+        <button class="btn btn-outline btn-sm" onclick="selectAllReg()">เลือก X ทั้งหมด</button>
+      </div>
+      <div id="reg-result"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PANEL 10 — Nonparametric
+  ══════════════════════════════════════════════════ -->
+  <div id="panel-nonpar" class="panel">
+    <div class="card">
+      <div class="card-title"><div class="icon icon-green">🔀</div>สถิติไม่อิงพารามิเตอร์ (Nonparametric Tests)</div>
+      <label>ประเภทการทดสอบ</label>
+      <select id="nonpar-type" onchange="updateNonparUI()" style="max-width:340px">
+        <option value="mw">Mann-Whitney U (2 กลุ่มอิสระ)</option>
+        <option value="wil">Wilcoxon Signed-Rank (ก่อน-หลัง)</option>
+        <option value="kw">Kruskal-Wallis (3+ กลุ่ม)</option>
+      </select>
+      <div id="nonpar-ui" style="margin-top:16px"></div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="runNonpar()">▶ คำนวณ</button>
+      </div>
+      <div id="nonpar-result"></div>
+    </div>
+  </div>
+
 </div><!-- /container -->
 
 <div class="toast" id="toast"></div>
@@ -401,7 +465,7 @@ function showPanel(id){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tabs > .tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
-  const idx = ['data','desc','freq','ttest','anova','corr','chi'].indexOf(id);
+  const idx = ['data','desc','freq','ttest','anova','corr','chi','alpha','reg','nonpar'].indexOf(id);
   document.querySelectorAll('.tabs > .tab')[idx]?.classList.add('active');
   if(id!=='data') refreshSelects();
 }
@@ -555,7 +619,18 @@ function refreshSelects(){
   fillSelect('corr-vars', NUM_COLS, true);
   fillSelect('chi-row', COLS);
   fillSelect('chi-col', COLS);
+  fillSelect('alpha-vars', NUM_COLS, true);
+  fillSelect('reg-dep', NUM_COLS);
+  fillSelect('reg-ind', NUM_COLS, true);
   updateTTestUI();
+  updateNonparUI();
+}
+
+function selectAllAlpha(){
+  [...document.getElementById('alpha-vars').options].forEach(o=>o.selected=true);
+}
+function selectAllReg(){
+  [...document.getElementById('reg-ind').options].forEach(o=>o.selected=true);
 }
 
 function fillSelect(id, list, multi=false){
@@ -1149,6 +1224,367 @@ function printResult(id){
   win.document.close();
   win.focus();
   setTimeout(()=>win.print(), 600);
+}
+
+/* ═══════════════════════════════════════════════════════
+   CRONBACH'S ALPHA
+═══════════════════════════════════════════════════════ */
+function runAlpha(){
+  if(!DATA.length){ toast('นำเข้าข้อมูลก่อน'); return; }
+  const vars = getSelected('alpha-vars');
+  if(vars.length < 2){ toast('เลือกอย่างน้อย 2 ข้อคำถาม'); return; }
+
+  // build matrix: rows = respondents, cols = items
+  const matrix = DATA.map(r => vars.map(v => parseFloat(r[v]))).filter(row => row.every(v => !isNaN(v)));
+  const n = matrix.length, k = vars.length;
+  if(n < 2){ toast('ข้อมูลไม่พอ'); return; }
+
+  // item variances
+  const itemMeans = vars.map((_,j) => mean(matrix.map(r=>r[j])));
+  const itemVars  = vars.map((_,j) => variance(matrix.map(r=>r[j])));
+  const sumItemVar = itemVars.reduce((a,b)=>a+b,0);
+
+  // total score variance
+  const totals = matrix.map(row => row.reduce((a,b)=>a+b,0));
+  const totalVar = variance(totals);
+
+  const alpha = (k/(k-1)) * (1 - sumItemVar/totalVar);
+
+  // item-total correlation & alpha-if-deleted
+  const rows = vars.map((v,j) => {
+    const itemScores = matrix.map(r=>r[j]);
+    const restScores = matrix.map(r=>r.reduce((s,x,i)=>i===j?s:s+x,0));
+    // Pearson
+    const mi=mean(itemScores), mr=mean(restScores);
+    const num=itemScores.reduce((s,x,i)=>s+(x-mi)*(restScores[i]-mr),0);
+    const den=Math.sqrt(itemScores.reduce((s,x)=>s+(x-mi)**2,0)*restScores.reduce((s,x)=>s+(x-mr)**2,0));
+    const rit = den===0?0:num/den;
+
+    // alpha if deleted
+    const kk = k-1;
+    const sv = itemVars.reduce((s,iv,i)=>i===j?s:s+iv,0);
+    const tv = variance(restScores);
+    const aidel = kk<2?0:(kk/(kk-1))*(1-sv/tv);
+
+    return { v, mean: mean(itemScores), sd: sd(itemScores), rit, aidel };
+  });
+
+  const interp = alpha>=.9?'ดีเยี่ยม (Excellent)':alpha>=.8?'ดี (Good)':alpha>=.7?'ยอมรับได้ (Acceptable)':alpha>=.6?'น่าสงสัย (Questionable)':alpha>=.5?'ต่ำ (Poor)':'ต่ำมาก (Unacceptable)';
+  const pass = alpha >= .7;
+
+  let html = `<div class="result-box"><div class="result-title">🔐 Reliability Analysis — Cronbach's Alpha</div>
+    <div class="stat-grid">
+      <div class="stat-item"><div class="stat-label">จำนวนข้อ (k)</div><div class="stat-value">${k}</div></div>
+      <div class="stat-item"><div class="stat-label">ผู้ตอบ (N)</div><div class="stat-value">${n}</div></div>
+      <div class="stat-item"><div class="stat-label">Cronbach's α</div><div class="stat-value ${pass?'green':'red'}">${fmt(alpha,3)}</div></div>
+      <div class="stat-item"><div class="stat-label">Var (Total)</div><div class="stat-value">${fmt(totalVar,3)}</div></div>
+    </div>
+    <div class="interp${pass?'':' warn'}" style="margin-top:12px">
+      ${pass?'✅':'⚠️'} α = ${fmt(alpha,3)} — ระดับความเชื่อมั่น: <b>${interp}</b>
+      ${pass?'(ค่า α ≥ .70 ถือว่าผ่านเกณฑ์)':'(ค่า α < .70 ควรพิจารณาตัดหรือปรับปรุงข้อคำถาม)'}
+    </div>
+    <div class="tbl-wrap" style="margin-top:12px"><table><thead><tr>
+      <th>ข้อคำถาม</th><th>Mean</th><th>SD</th><th>r (item-total)</th><th>α if deleted</th></tr></thead><tbody>`;
+
+  rows.forEach(r=>{
+    const flag = r.aidel > alpha + .02 ? '⚠️' : '';
+    html += `<tr><td>${r.v}</td><td>${fmt(r.mean,2)}</td><td>${fmt(r.sd,2)}</td>
+      <td>${fmt(r.rit,3)}</td><td>${fmt(r.aidel,3)} ${flag}</td></tr>`;
+  });
+
+  html += `</tbody></table></div>
+    <p class="alpha-note" style="margin-top:8px">⚠️ หมายถึงถ้าลบข้อนั้นออก α จะสูงขึ้นอย่างมีนัยสำคัญ</p>`;
+  html += exportBar('alpha');
+  html += '</div>';
+  document.getElementById('alpha-result').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LINEAR REGRESSION
+═══════════════════════════════════════════════════════ */
+function runReg(){
+  if(!DATA.length){ toast('นำเข้าข้อมูลก่อน'); return; }
+  const dep = document.getElementById('reg-dep').value;
+  const inds = getSelected('reg-ind').filter(v=>v!==dep);
+  if(!dep || inds.length<1){ toast('เลือกตัวแปรตาม Y และตัวแปรอิสระ X อย่างน้อย 1 ตัว'); return; }
+
+  // build valid rows
+  const cols = [dep,...inds];
+  const rows = DATA.map(r=>cols.map(c=>parseFloat(r[c]))).filter(r=>r.every(v=>!isNaN(v)));
+  const n=rows.length, p=inds.length;
+  if(n <= p+1){ toast('ข้อมูลไม่พอสำหรับจำนวนตัวแปร'); return; }
+
+  const Y = rows.map(r=>r[0]);
+  const Xmat = rows.map(r=>[1,...r.slice(1)]); // design matrix with intercept
+
+  // OLS: β = (X'X)^-1 X'Y
+  const XT = transpose(Xmat);
+  const XTX = matMul(XT, Xmat);
+  const XTXinv = matInv(XTX);
+  if(!XTXinv){ toast('ไม่สามารถคำนวณได้ (ตัวแปรอาจสัมพันธ์กันสูงมาก)'); return; }
+  const XTY = matMulVec(XT, Y);
+  const beta = matMulVec(XTXinv, XTY);
+
+  const Yhat = Xmat.map(row=>row.reduce((s,x,i)=>s+x*beta[i],0));
+  const resid = Y.map((y,i)=>y-Yhat[i]);
+  const Ymean = mean(Y);
+  const SST = Y.reduce((s,y)=>s+(y-Ymean)**2,0);
+  const SSR = Yhat.reduce((s,y)=>s+(y-Ymean)**2,0);
+  const SSE = resid.reduce((s,e)=>s+e*e,0);
+  const R2 = SSR/SST;
+  const adjR2 = 1-(1-R2)*(n-1)/(n-p-1);
+  const MSR = SSR/p;
+  const MSE = SSE/(n-p-1);
+  const F = MSR/MSE;
+  const pF = fDist(F, p, n-p-1);
+  const sig = pF<.05;
+  const SEE = Math.sqrt(MSE);
+
+  // SE of coefficients
+  const covB = XTXinv.map(row=>row.map(v=>v*MSE));
+  const seBeta = covB.map((row,i)=>Math.sqrt(row[i]));
+
+  const coefLabels = ['Constant',...inds];
+
+  let html = `<div class="result-box"><div class="result-title">📉 Linear Regression: ${dep} = f(${inds.join(', ')})</div>
+
+    <div class="stat-grid">
+      <div class="stat-item"><div class="stat-label">R</div><div class="stat-value">${fmt(Math.sqrt(R2),3)}</div></div>
+      <div class="stat-item"><div class="stat-label">R²</div><div class="stat-value green">${fmt(R2,3)}</div></div>
+      <div class="stat-item"><div class="stat-label">Adj. R²</div><div class="stat-value">${fmt(adjR2,3)}</div></div>
+      <div class="stat-item"><div class="stat-label">SEE</div><div class="stat-value">${fmt(SEE,3)}</div></div>
+      <div class="stat-item"><div class="stat-label">N</div><div class="stat-value">${n}</div></div>
+    </div>
+
+    <div class="tbl-wrap" style="margin-top:12px"><table><thead><tr>
+      <th>Source</th><th>SS</th><th>df</th><th>MS</th><th>F</th><th>p</th></tr></thead><tbody>
+      <tr><td>Regression</td><td>${fmt(SSR,3)}</td><td>${p}</td><td>${fmt(MSR,3)}</td>
+        <td>${fmt(F,3)}</td><td class="${sig?'sig':'not-sig'}">${fmtP(pF)} ${sigStars(pF)}</td></tr>
+      <tr><td>Residual</td><td>${fmt(SSE,3)}</td><td>${n-p-1}</td><td>${fmt(MSE,3)}</td><td>—</td><td>—</td></tr>
+      <tr style="font-weight:700"><td>Total</td><td>${fmt(SST,3)}</td><td>${n-1}</td><td>—</td><td>—</td><td>—</td></tr>
+    </tbody></table></div>
+
+    <div class="tbl-wrap" style="margin-top:12px"><table><thead><tr>
+      <th>ตัวแปร</th><th>B</th><th>SE(B)</th><th>β (std)</th><th>t</th><th>p</th></tr></thead><tbody>`;
+
+  // standardized beta
+  const sdY = sd(Y);
+  const sdX = inds.map(v=>sd(rows.map(r=>r[inds.indexOf(v)+1])));
+
+  coefLabels.forEach((lbl,i)=>{
+    const b=beta[i], se=seBeta[i];
+    const t=b/se, pt=tDist2(Math.abs(t),n-p-1);
+    const stdB = i===0?'—':fmt(b*sdX[i-1]/sdY,3);
+    html += `<tr><td><b>${lbl}</b></td><td>${fmt(b,4)}</td><td>${fmt(se,4)}</td>
+      <td>${stdB}</td><td>${fmt(t,3)}</td>
+      <td class="${pt<.05?'sig':'not-sig'}">${fmtP(pt)} ${sigStars(pt)}</td></tr>`;
+  });
+
+  html += `</tbody></table></div>
+
+    <div class="interp${sig?'':' warn'}" style="margin-top:12px">
+      ${sig?'✅':'⚠️'} โมเดล${sig?'มี':'ไม่มี'}นัยสำคัญ F(${p},${n-p-1}) = ${fmt(F,3)}, p ${pF<.001?'< .001':'= '+fmtP(pF)}<br>
+      ตัวแปร X อธิบายความแปรปรวนของ Y ได้ ${fmt(R2*100,1)}% (R² = ${fmt(R2,3)})
+    </div>`;
+
+  html += exportBar('reg');
+  html += '</div>';
+  document.getElementById('reg-result').innerHTML = html;
+}
+
+// Matrix helpers
+function transpose(M){ return M[0].map((_,i)=>M.map(r=>r[i])); }
+function matMul(A,B){
+  return A.map(ra=>B[0].map((_,j)=>ra.reduce((s,_,k)=>s+ra[k]*B[k][j],0)));
+}
+function matMulVec(A,v){
+  return A.map(row=>row.reduce((s,a,i)=>s+a*v[i],0));
+}
+function matInv(M){
+  const n=M.length;
+  const A=M.map((r,i)=>[...r,...Array(n).fill(0).map((_,j)=>i===j?1:0)]);
+  for(let i=0;i<n;i++){
+    let maxR=i;
+    for(let k=i+1;k<n;k++) if(Math.abs(A[k][i])>Math.abs(A[maxR][i])) maxR=k;
+    [A[i],A[maxR]]=[A[maxR],A[i]];
+    if(Math.abs(A[i][i])<1e-12) return null;
+    const d=A[i][i];
+    A[i]=A[i].map(v=>v/d);
+    for(let k=0;k<n;k++) if(k!==i){ const f=A[k][i]; A[k]=A[k].map((v,j)=>v-f*A[i][j]); }
+  }
+  return A.map(r=>r.slice(n));
+}
+
+/* ═══════════════════════════════════════════════════════
+   NONPARAMETRIC
+═══════════════════════════════════════════════════════ */
+function updateNonparUI(){
+  const type = document.getElementById('nonpar-type')?.value;
+  const ui = document.getElementById('nonpar-ui');
+  if(!ui) return;
+  const numOpts = NUM_COLS.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const allOpts = COLS.map(c=>`<option value="${c}">${c}</option>`).join('');
+
+  if(type==='mw'){
+    ui.innerHTML=`<div class="row row-2">
+      <div><label>ตัวแปรตาม (ตัวเลข)</label><select id="np-dep">${numOpts}</select></div>
+      <div><label>ตัวแปรกลุ่ม (2 กลุ่ม)</label><select id="np-grp">${allOpts}</select></div>
+    </div>`;
+  } else if(type==='wil'){
+    ui.innerHTML=`<div class="row row-2">
+      <div><label>ตัวแปรที่ 1 (ก่อน)</label><select id="np-v1">${numOpts}</select></div>
+      <div><label>ตัวแปรที่ 2 (หลัง)</label><select id="np-v2">${numOpts}</select></div>
+    </div>`;
+  } else {
+    ui.innerHTML=`<div class="row row-2">
+      <div><label>ตัวแปรตาม (ตัวเลข)</label><select id="np-dep">${numOpts}</select></div>
+      <div><label>ตัวแปรกลุ่ม (3+ กลุ่ม)</label><select id="np-grp">${allOpts}</select></div>
+    </div>`;
+  }
+}
+
+function rankAll(arr){
+  // returns ranks with ties averaged
+  const idx=[...arr.keys()].sort((a,b)=>arr[a]-arr[b]);
+  const r=new Array(arr.length);
+  let i=0;
+  while(i<idx.length){
+    let j=i;
+    while(j<idx.length-1 && arr[idx[j+1]]===arr[idx[j]]) j++;
+    const avgR=(i+j)/2+1;
+    for(let k=i;k<=j;k++) r[idx[k]]=avgR;
+    i=j+1;
+  }
+  return r;
+}
+
+function normalCDF(z){
+  // approximation
+  const t=1/(1+0.2316419*Math.abs(z));
+  const d=0.3989423*Math.exp(-z*z/2);
+  const p=d*t*(0.3193815+t*(-0.3565638+t*(1.7814779+t*(-1.8212560+t*1.3302744))));
+  return z>0?1-p:p;
+}
+
+function runNonpar(){
+  if(!DATA.length){ toast('นำเข้าข้อมูลก่อน'); return; }
+  const type = document.getElementById('nonpar-type').value;
+  let html='';
+
+  if(type==='mw'){
+    const dep=document.getElementById('np-dep')?.value;
+    const grp=document.getElementById('np-grp')?.value;
+    if(!dep||!grp) return;
+    const groups={};
+    DATA.forEach(r=>{ const g=r[grp],v=parseFloat(r[dep]); if(!isNaN(v)){ if(!groups[g])groups[g]=[]; groups[g].push(v); } });
+    const keys=Object.keys(groups);
+    if(keys.length<2){ toast('ต้องมีอย่างน้อย 2 กลุ่ม'); return; }
+    const [g1,g2]=[groups[keys[0]],groups[keys[1]]];
+    const n1=g1.length, n2=g2.length;
+    const all=[...g1.map(v=>({v,g:0})),...g2.map(v=>({v,g:1}))];
+    const rv=rankAll(all.map(x=>x.v));
+    let R1=0; all.forEach((x,i)=>{ if(x.g===0) R1+=rv[i]; });
+    const U1=R1-n1*(n1+1)/2;
+    const U2=n1*n2-U1;
+    const U=Math.min(U1,U2);
+    const mu=n1*n2/2;
+    const sigma=Math.sqrt(n1*n2*(n1+n2+1)/12);
+    const z=(U-mu)/sigma;
+    const p=2*normalCDF(-Math.abs(z));
+    const sig=p<.05;
+
+    html=`<div class="result-box"><div class="result-title">🔀 Mann-Whitney U: ${dep} by ${grp}</div>
+      <div class="stat-grid">
+        <div class="stat-item"><div class="stat-label">N(${keys[0]})</div><div class="stat-value">${n1}</div></div>
+        <div class="stat-item"><div class="stat-label">N(${keys[1]})</div><div class="stat-value">${n2}</div></div>
+        <div class="stat-item"><div class="stat-label">U</div><div class="stat-value">${fmt(U,1)}</div></div>
+        <div class="stat-item"><div class="stat-label">z</div><div class="stat-value">${fmt(z,3)}</div></div>
+        <div class="stat-item"><div class="stat-label">p (2-tailed)</div><div class="stat-value ${sig?'green':'red'}">${fmtP(p)}</div></div>
+      </div>
+      <div class="interp${sig?'':' warn'}" style="margin-top:12px">
+        ${sig?'✅':'⚠️'} ค่ามัธยฐานของ 2 กลุ่ม${sig?'แตกต่าง':'ไม่แตกต่าง'}กันอย่างมีนัยสำคัญ
+        U = ${fmt(U,1)}, z = ${fmt(z,3)}, p ${p<.001?'< .001':'= '+fmtP(p)} ${sigStars(p)}
+      </div>`;
+
+  } else if(type==='wil'){
+    const v1=document.getElementById('np-v1')?.value;
+    const v2=document.getElementById('np-v2')?.value;
+    if(!v1||!v2) return;
+    const pairs=DATA.map(r=>[parseFloat(r[v1]),parseFloat(r[v2])]).filter(p=>!isNaN(p[0])&&!isNaN(p[1]));
+    const diffs=pairs.map(p=>p[0]-p[1]).filter(d=>d!==0);
+    const n=diffs.length;
+    if(n<5){ toast('ข้อมูลไม่พอ (ต้องการอย่างน้อย 5 คู่ที่ต่างกัน)'); return; }
+    const absDiffs=diffs.map(Math.abs);
+    const ranks=rankAll(absDiffs);
+    const Wplus=diffs.reduce((s,d,i)=>d>0?s+ranks[i]:s,0);
+    const Wminus=diffs.reduce((s,d,i)=>d<0?s+ranks[i]:s,0);
+    const W=Math.min(Wplus,Wminus);
+    const mu=n*(n+1)/4;
+    const sigma=Math.sqrt(n*(n+1)*(2*n+1)/24);
+    const z=(W-mu)/sigma;
+    const p=2*normalCDF(-Math.abs(z));
+    const sig=p<.05;
+
+    html=`<div class="result-box"><div class="result-title">🔀 Wilcoxon Signed-Rank: ${v1} vs ${v2}</div>
+      <div class="stat-grid">
+        <div class="stat-item"><div class="stat-label">N (คู่)</div><div class="stat-value">${n}</div></div>
+        <div class="stat-item"><div class="stat-label">W+</div><div class="stat-value">${fmt(Wplus,1)}</div></div>
+        <div class="stat-item"><div class="stat-label">W−</div><div class="stat-value">${fmt(Wminus,1)}</div></div>
+        <div class="stat-item"><div class="stat-label">z</div><div class="stat-value">${fmt(z,3)}</div></div>
+        <div class="stat-item"><div class="stat-label">p (2-tailed)</div><div class="stat-value ${sig?'green':'red'}">${fmtP(p)}</div></div>
+      </div>
+      <div class="interp${sig?'':' warn'}" style="margin-top:12px">
+        ${sig?'✅':'⚠️'} ค่ามัธยฐานก่อน-หลัง${sig?'แตกต่าง':'ไม่แตกต่าง'}กันอย่างมีนัยสำคัญ
+        W = ${fmt(W,1)}, z = ${fmt(z,3)}, p ${p<.001?'< .001':'= '+fmtP(p)} ${sigStars(p)}
+      </div>`;
+
+  } else {
+    const dep=document.getElementById('np-dep')?.value;
+    const grp=document.getElementById('np-grp')?.value;
+    if(!dep||!grp) return;
+    const groups={};
+    DATA.forEach(r=>{ const g=r[grp],v=parseFloat(r[dep]); if(!isNaN(v)){ if(!groups[g])groups[g]=[]; groups[g].push(v); } });
+    const keys=Object.keys(groups).filter(k=>groups[k].length>=2);
+    if(keys.length<3){ toast('Kruskal-Wallis ต้องมีอย่างน้อย 3 กลุ่ม'); return; }
+
+    const all=[].concat(...keys.map(g=>groups[g].map(v=>({v,g}))));
+    const N=all.length;
+    const rv=rankAll(all.map(x=>x.v));
+    const H=12/(N*(N+1)) * keys.reduce((s,g)=>{
+      const gi=all.map((x,i)=>x.g===g?rv[i]:null).filter(v=>v!==null);
+      return s + gi.length*mean(gi)**2;
+    },0) - 3*(N+1);
+    const df=keys.length-1;
+    const p=chiDist(H,df);
+    const sig=p<.05;
+
+    html=`<div class="result-box"><div class="result-title">🔀 Kruskal-Wallis: ${dep} by ${grp}</div>
+      <div class="stat-grid">
+        <div class="stat-item"><div class="stat-label">N</div><div class="stat-value">${N}</div></div>
+        <div class="stat-item"><div class="stat-label">กลุ่ม</div><div class="stat-value">${keys.length}</div></div>
+        <div class="stat-item"><div class="stat-label">H</div><div class="stat-value">${fmt(H,3)}</div></div>
+        <div class="stat-item"><div class="stat-label">df</div><div class="stat-value">${df}</div></div>
+        <div class="stat-item"><div class="stat-label">p</div><div class="stat-value ${sig?'green':'red'}">${fmtP(p)}</div></div>
+      </div>
+      <div class="tbl-wrap" style="margin-top:10px"><table><thead><tr>
+        <th>กลุ่ม</th><th>N</th><th>Median</th><th>Mean Rank</th></tr></thead><tbody>`;
+
+    keys.forEach(g=>{
+      const gi=all.map((x,i)=>x.g===g?rv[i]:null).filter(v=>v!==null);
+      const vals=groups[g];
+      html+=`<tr><td>${g}</td><td>${vals.length}</td><td>${fmt(median(vals),2)}</td><td>${fmt(mean(gi),2)}</td></tr>`;
+    });
+
+    html+=`</tbody></table></div>
+      <div class="interp${sig?'':' warn'}" style="margin-top:12px">
+        ${sig?'✅':'⚠️'} ค่ามัธยฐาน${sig?'แตกต่าง':'ไม่แตกต่าง'}กันระหว่างกลุ่มอย่างมีนัยสำคัญ
+        H(${df}) = ${fmt(H,3)}, p ${p<.001?'< .001':'= '+fmtP(p)} ${sigStars(p)}
+      </div>`;
+  }
+
+  html += exportBar('nonpar');
+  html += '</div>';
+  document.getElementById('nonpar-result').innerHTML = html;
 }
 
 /* ═══════════════════════════════════════════════════════
