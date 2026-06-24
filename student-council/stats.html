@@ -184,6 +184,8 @@ tr:nth-child(even) td{background:var(--gray-50)}
     <button class="tab" onclick="showPanel('alpha')">🔐 Cronbach's α</button>
     <button class="tab" onclick="showPanel('reg')">📉 Regression</button>
     <button class="tab" onclick="showPanel('nonpar')">🔀 Nonparametric</button>
+    <button class="tab" onclick="showPanel('zscore')">📐 Z / T / IQ</button>
+    <button class="tab" onclick="showPanel('samplesize')">🎯 ขนาดกลุ่มตัวอย่าง</button>
   </div>
 
   <!-- ══════════════════════════════════════════════════
@@ -446,6 +448,89 @@ tr:nth-child(even) td{background:var(--gray-50)}
     </div>
   </div>
 
+  <!-- ══════════════════════════════════════════════════
+       PANEL 11 — Z-score / T-score / IQ
+  ══════════════════════════════════════════════════ -->
+  <div id="panel-zscore" class="panel">
+    <div class="card">
+      <div class="card-title"><div class="icon icon-blue">📐</div>แปลงคะแนน Z-score / T-score / IQ</div>
+      <p class="data-hint" style="margin-bottom:14px">แปลงคะแนนดิบเป็นคะแนนมาตรฐาน (Z, T, IQ) ตามสูตร: Z=(X−X̄)/SD, T=50+10Z, IQ=100+15Z</p>
+
+      <div style="background:var(--blue-light);border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <b>โหมด 1 — คำนวณจากข้อมูลที่นำเข้า</b>
+        <div class="row row-2" style="margin-top:10px">
+          <div><label>เลือกตัวแปร</label><select id="zs-col"></select></div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="runZfromData()">▶ คำนวณจากข้อมูล</button>
+      </div>
+
+      <div style="background:var(--orange-light);border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <b>โหมด 2 — กรอกค่าเอง (ไม่ต้องมีข้อมูล)</b>
+        <div class="row row-3" style="margin-top:10px">
+          <div><label>คะแนนดิบ (X)</label><input type="number" id="zs-x" placeholder="เช่น 50" step="any"></div>
+          <div><label>ค่าเฉลี่ย (X̄)</label><input type="number" id="zs-mean" placeholder="เช่น 41" step="any"></div>
+          <div><label>SD</label><input type="number" id="zs-sd" placeholder="เช่น 21.19" step="any"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="runZmanual()">▶ แปลงคะแนน</button>
+      </div>
+
+      <div id="zscore-result"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PANEL 12 — Sample Size
+  ══════════════════════════════════════════════════ -->
+  <div id="panel-samplesize" class="panel">
+    <div class="card">
+      <div class="card-title"><div class="icon icon-green">🎯</div>คำนวณขนาดกลุ่มตัวอย่าง</div>
+
+      <div class="tabs" style="margin-bottom:16px">
+        <button class="tab active" id="ss-tab-yamane" onclick="switchSS('yamane')">Yamane (ทั่วไป)</button>
+        <button class="tab" id="ss-tab-cochran" onclick="switchSS('cochran')">Cochran (สัดส่วน)</button>
+        <button class="tab" id="ss-tab-krejcie" onclick="switchSS('krejcie')">Krejcie &amp; Morgan</button>
+      </div>
+
+      <!-- Yamane -->
+      <div id="ss-yamane">
+        <p class="data-hint" style="margin-bottom:10px">สูตร Taro Yamane: n = N / (1 + N·e²) — นิยมใช้ในงานวิจัยไทย</p>
+        <div class="row row-2">
+          <div><label>จำนวนประชากร (N)</label><input type="number" id="yamane-N" placeholder="เช่น 500" min="1"></div>
+          <div><label>ความคลาดเคลื่อน (e) เช่น 0.05</label><input type="number" id="yamane-e" value="0.05" step="0.01" min="0.01" max="0.2"></div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="calcYamane()">▶ คำนวณ</button>
+        <div id="yamane-result"></div>
+      </div>
+
+      <!-- Cochran -->
+      <div id="ss-cochran" style="display:none">
+        <p class="data-hint" style="margin-bottom:10px">สูตร Cochran: n = (Z²·p·q) / e² — ใช้เมื่อไม่รู้ขนาดประชากร</p>
+        <div class="row row-3">
+          <div><label>ระดับความเชื่อมั่น</label>
+            <select id="cochran-z">
+              <option value="1.645">90% (Z=1.645)</option>
+              <option value="1.96" selected>95% (Z=1.96)</option>
+              <option value="2.576">99% (Z=2.576)</option>
+            </select>
+          </div>
+          <div><label>สัดส่วน (p) เช่น 0.5</label><input type="number" id="cochran-p" value="0.5" step="0.01" min="0.01" max="0.99"></div>
+          <div><label>ความคลาดเคลื่อน (e)</label><input type="number" id="cochran-e" value="0.05" step="0.01" min="0.01"></div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="calcCochran()">▶ คำนวณ</button>
+        <div id="cochran-result"></div>
+      </div>
+
+      <!-- Krejcie & Morgan table -->
+      <div id="ss-krejcie" style="display:none">
+        <p class="data-hint" style="margin-bottom:10px">ตาราง Krejcie &amp; Morgan (α=.05) — ค้นหาขนาดกลุ่มตัวอย่างจากประชากร</p>
+        <div class="row row-2">
+          <div><label>จำนวนประชากร (N)</label><input type="number" id="km-N" placeholder="เช่น 200" min="10" onkeyup="calcKM()"></div>
+        </div>
+        <div id="km-result" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /container -->
 
 <div class="toast" id="toast"></div>
@@ -465,7 +550,7 @@ function showPanel(id){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tabs > .tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
-  const idx = ['data','desc','freq','ttest','anova','corr','chi','alpha','reg','nonpar'].indexOf(id);
+  const idx = ['data','desc','freq','ttest','anova','corr','chi','alpha','reg','nonpar','zscore','samplesize'].indexOf(id);
   document.querySelectorAll('.tabs > .tab')[idx]?.classList.add('active');
   if(id!=='data') refreshSelects();
 }
@@ -622,6 +707,7 @@ function refreshSelects(){
   fillSelect('alpha-vars', NUM_COLS, true);
   fillSelect('reg-dep', NUM_COLS);
   fillSelect('reg-ind', NUM_COLS, true);
+  fillSelect('zs-col', NUM_COLS);
   updateTTestUI();
   updateNonparUI();
 }
@@ -1585,6 +1671,178 @@ function runNonpar(){
   html += exportBar('nonpar');
   html += '</div>';
   document.getElementById('nonpar-result').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Z-SCORE / T-SCORE / IQ
+═══════════════════════════════════════════════════════ */
+function zScoreTable(arr, labels){
+  const m = mean(arr), s = sd(arr);
+  let html = `<div class="result-box" style="margin-top:14px">
+    <div class="result-title">📐 ผลการแปลงคะแนน — Mean=${fmt(m,2)}, SD=${fmt(s,2)}</div>
+    <div class="stat-grid" style="margin-bottom:12px">
+      <div class="stat-item"><div class="stat-label">Mean (X̄)</div><div class="stat-value">${fmt(m,2)}</div></div>
+      <div class="stat-item"><div class="stat-label">SD</div><div class="stat-value">${fmt(s,2)}</div></div>
+      <div class="stat-item"><div class="stat-label">N</div><div class="stat-value">${arr.length}</div></div>
+    </div>
+    <div class="interp info">สูตร: Z=(X−X̄)/SD &nbsp;|&nbsp; T=50+10Z &nbsp;|&nbsp; IQ=100+15Z &nbsp;|&nbsp; T-Score: X̄=50, SD=10</div>
+    <div class="tbl-wrap" style="margin-top:10px"><table><thead><tr>
+      <th>${labels?'ชื่อ':'ลำดับ'}</th><th>X (คะแนนดิบ)</th><th>Z-score</th><th>T-score</th><th>IQ-score</th><th>เปอร์เซ็นไทล์</th></tr></thead><tbody>`;
+
+  arr.forEach((x,i)=>{
+    const z=(x-m)/s;
+    const t=50+10*z;
+    const iq=100+15*z;
+    const pct=(normalCDF(z)*100).toFixed(1);
+    html+=`<tr><td>${labels?labels[i]:i+1}</td><td>${fmt(x,2)}</td>
+      <td>${z>=0?'+':''}${fmt(z,3)}</td>
+      <td>${fmt(t,1)}</td>
+      <td>${fmt(iq,1)}</td>
+      <td>${pct}%</td></tr>`;
+  });
+  html+='</tbody></table></div>';
+  html+=exportBar('zscore');
+  html+='</div>';
+  return html;
+}
+
+function runZfromData(){
+  if(!DATA.length){ toast('นำเข้าข้อมูลก่อน'); return; }
+  const col = document.getElementById('zs-col').value;
+  if(!col) return;
+  const arr = numVals(col);
+  if(arr.length<2){ toast('ข้อมูลไม่พอ'); return; }
+  document.getElementById('zscore-result').innerHTML = zScoreTable(arr, null);
+}
+
+function runZmanual(){
+  const x=parseFloat(document.getElementById('zs-x').value);
+  const m=parseFloat(document.getElementById('zs-mean').value);
+  const s=parseFloat(document.getElementById('zs-sd').value);
+  if([x,m,s].some(isNaN)||s<=0){ toast('กรุณากรอกค่าให้ครบและ SD > 0'); return; }
+  const z=(x-m)/s;
+  const t=50+10*z;
+  const iq=100+15*z;
+  const pct=(normalCDF(z)*100).toFixed(1);
+  document.getElementById('zscore-result').innerHTML = `
+    <div class="result-box" style="margin-top:14px">
+      <div class="result-title">📐 ผลการแปลงคะแนน</div>
+      <div class="stat-grid">
+        <div class="stat-item"><div class="stat-label">X (คะแนนดิบ)</div><div class="stat-value">${fmt(x,2)}</div></div>
+        <div class="stat-item"><div class="stat-label">Z-score</div><div class="stat-value blue">${z>=0?'+':''}${fmt(z,3)}</div></div>
+        <div class="stat-item"><div class="stat-label">T-score</div><div class="stat-value">${fmt(t,1)}</div></div>
+        <div class="stat-item"><div class="stat-label">IQ-score</div><div class="stat-value">${fmt(iq,1)}</div></div>
+        <div class="stat-item"><div class="stat-label">Percentile</div><div class="stat-value green">${pct}%</div></div>
+      </div>
+      <div class="interp info" style="margin-top:10px">
+        X=${fmt(x,2)} → Z=${z>=0?'+':''}${fmt(z,3)} → T=${fmt(t,1)} → IQ=${fmt(iq,1)} → อยู่ที่เปอร์เซ็นไทล์ที่ ${pct}
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SAMPLE SIZE
+═══════════════════════════════════════════════════════ */
+function switchSS(mode){
+  ['yamane','cochran','krejcie'].forEach(m=>{
+    document.getElementById('ss-'+m).style.display = m===mode?'':'none';
+    document.getElementById('ss-tab-'+m)?.classList.toggle('active',m===mode);
+  });
+}
+
+function calcYamane(){
+  const N=parseFloat(document.getElementById('yamane-N').value);
+  const e=parseFloat(document.getElementById('yamane-e').value);
+  if(isNaN(N)||isNaN(e)||N<1||e<=0){ toast('กรุณากรอกค่า N และ e ให้ถูกต้อง'); return; }
+  const n = N / (1 + N*e*e);
+  const nCeil = Math.ceil(n);
+
+  // show table for ±10% of N
+  const eValues=[0.01,0.05,0.10,0.15,0.20];
+  let tableRows='';
+  eValues.forEach(ei=>{
+    const ni=Math.ceil(N/(1+N*ei*ei));
+    tableRows+=`<tr${ei===e?` style="background:var(--blue-light);font-weight:700"`:''}>
+      <td>${(ei*100).toFixed(0)}%</td><td>${ni} คน</td>
+      <td>${(ni/N*100).toFixed(1)}%</td></tr>`;
+  });
+
+  document.getElementById('yamane-result').innerHTML=`
+    <div class="result-box" style="margin-top:12px">
+      <div class="stat-grid">
+        <div class="stat-item"><div class="stat-label">ประชากร (N)</div><div class="stat-value">${N.toLocaleString()}</div></div>
+        <div class="stat-item"><div class="stat-label">ความคลาดเคลื่อน (e)</div><div class="stat-value">${(e*100).toFixed(0)}%</div></div>
+        <div class="stat-item"><div class="stat-label">กลุ่มตัวอย่าง (n)</div><div class="stat-value green">${nCeil} คน</div></div>
+      </div>
+      <div class="interp" style="margin-top:10px">
+        ✅ n = ${N} / (1 + ${N}×${e}²) = ${fmt(n,2)} → ปัดขึ้นเป็น <b>${nCeil} คน</b>
+      </div>
+      <div class="tbl-wrap" style="margin-top:12px"><table><thead><tr>
+        <th>ความคลาดเคลื่อน (e)</th><th>ขนาดกลุ่มตัวอย่าง</th><th>% ของประชากร</th></tr></thead>
+        <tbody>${tableRows}</tbody></table></div>
+    </div>`;
+}
+
+function calcCochran(){
+  const Z=parseFloat(document.getElementById('cochran-z').value);
+  const p=parseFloat(document.getElementById('cochran-p').value);
+  const e=parseFloat(document.getElementById('cochran-e').value);
+  if([Z,p,e].some(isNaN)||p<=0||p>=1||e<=0){ toast('กรุณากรอกค่าให้ถูกต้อง'); return; }
+  const q=1-p;
+  const n=Math.ceil((Z*Z*p*q)/(e*e));
+  const conf = Z===1.645?90:Z===2.576?99:95;
+  document.getElementById('cochran-result').innerHTML=`
+    <div class="result-box" style="margin-top:12px">
+      <div class="stat-grid">
+        <div class="stat-item"><div class="stat-label">ความเชื่อมั่น</div><div class="stat-value">${conf}%</div></div>
+        <div class="stat-item"><div class="stat-label">p</div><div class="stat-value">${p}</div></div>
+        <div class="stat-item"><div class="stat-label">e</div><div class="stat-value">${(e*100).toFixed(0)}%</div></div>
+        <div class="stat-item"><div class="stat-label">กลุ่มตัวอย่าง (n)</div><div class="stat-value green">${n} คน</div></div>
+      </div>
+      <div class="interp" style="margin-top:10px">
+        ✅ n = (${Z}²×${p}×${q}) / ${e}² = ${fmt((Z*Z*p*q)/(e*e),2)} → ปัดขึ้นเป็น <b>${n} คน</b>
+      </div>
+    </div>`;
+}
+
+// Krejcie & Morgan table (selected values from original table, α=.05)
+const KM_TABLE=[
+  [10,10],[15,14],[20,19],[25,24],[30,28],[35,32],[40,36],[45,40],[50,44],
+  [55,48],[60,52],[65,56],[70,59],[75,63],[80,66],[85,70],[90,73],[95,76],
+  [100,80],[110,86],[120,92],[130,97],[140,103],[150,108],[160,113],[170,118],
+  [180,123],[190,127],[200,132],[210,136],[220,140],[230,144],[240,148],[250,152],
+  [260,155],[270,159],[280,162],[290,165],[300,169],[320,175],[340,181],[360,186],
+  [380,191],[400,196],[420,201],[440,205],[460,210],[480,214],[500,217],
+  [550,226],[600,234],[650,242],[700,248],[750,254],[800,260],[850,265],
+  [900,269],[950,274],[1000,278],[1100,285],[1200,291],[1300,297],[1400,302],
+  [1500,306],[1600,310],[1700,313],[1800,317],[1900,320],[2000,322],
+  [2200,327],[2400,331],[2600,335],[2800,338],[3000,341],[3500,346],
+  [4000,351],[4500,354],[5000,357],[6000,361],[7000,364],[8000,367],
+  [9000,368],[10000,370]
+];
+
+function calcKM(){
+  const N=parseInt(document.getElementById('km-N').value);
+  if(isNaN(N)||N<10){ document.getElementById('km-result').innerHTML=''; return; }
+  // find closest N in table
+  let best=KM_TABLE[0];
+  for(const row of KM_TABLE){
+    if(row[0]<=N) best=row;
+    else break;
+  }
+  // also show Yamane for comparison
+  const yamane=Math.ceil(N/(1+N*0.05*0.05));
+  document.getElementById('km-result').innerHTML=`
+    <div class="result-box">
+      <div class="stat-grid">
+        <div class="stat-item"><div class="stat-label">N ที่ใกล้เคียง</div><div class="stat-value">${best[0].toLocaleString()}</div></div>
+        <div class="stat-item"><div class="stat-label">n (Krejcie)</div><div class="stat-value green">${best[1]} คน</div></div>
+        <div class="stat-item"><div class="stat-label">n (Yamane 5%)</div><div class="stat-value">${yamane} คน</div></div>
+      </div>
+      <div class="interp" style="margin-top:10px">
+        ✅ ประชากร ${N.toLocaleString()} คน → ใช้กลุ่มตัวอย่าง <b>${best[1]} คน</b> (Krejcie & Morgan, α=.05)
+      </div>
+    </div>`;
 }
 
 /* ═══════════════════════════════════════════════════════
