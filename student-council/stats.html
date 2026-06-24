@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="StatPad">
+<title>StatPad — โปรแกรมสถิติ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a56db;--blue-dark:#1240a8;--blue-light:#e8f0fe;
+  --green:#0a7a3e;--green-light:#e6f4ed;
+  --red:#c0392b;--red-light:#fdf0ef;
+  --orange:#c67c0a;--orange-light:#fef9e7;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+  --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-600:#4b5563;--gray-800:#1f2937;
+  --radius:14px;--radius-sm:9px;--shadow:0 2px 12px rgba(0,0,0,.09);
+  --font:'Sarabun',sans-serif;
+}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:var(--font);background:var(--gray-50);color:var(--gray-800);min-height:100vh;padding-bottom:40px}
+h1,h2,h3,h4{font-weight:700;line-height:1.3}
+
+/* ─── Header ─── */
+.header{background:linear-gradient(135deg,#1240a8 0%,#1a56db 60%,#2563eb 100%);
+  color:#fff;padding:18px 20px 16px;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 16px rgba(18,64,168,.35)}
+.header-inner{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.header-icon{width:38px;height:38px;background:rgba(255,255,255,.18);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+.header h1{font-size:1.15rem;font-weight:800;letter-spacing:.01em}
+.header p{font-size:.78rem;opacity:.8;margin-top:1px}
+.badge{background:rgba(255,255,255,.22);border-radius:20px;padding:2px 9px;
+  font-size:.7rem;font-weight:700;margin-left:6px}
+
+/* ─── Layout ─── */
+.container{max-width:860px;margin:0 auto;padding:20px 16px}
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:22px 20px;margin-bottom:16px;border:1px solid var(--gray-200)}
+.card-title{font-size:.95rem;font-weight:700;color:var(--blue-dark);
+  display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.card-title .icon{width:28px;height:28px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:.95rem}
+.icon-blue{background:var(--blue-light)}
+.icon-green{background:var(--green-light)}
+.icon-orange{background:var(--orange-light)}
+
+/* ─── Tabs ─── */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:20px}
+.tab{padding:8px 14px;border:1.5px solid var(--gray-200);border-radius:22px;
+  font-family:var(--font);font-size:.83rem;font-weight:600;cursor:pointer;
+  background:#fff;color:var(--gray-600);transition:all .15s;white-space:nowrap}
+.tab:active{transform:scale(.97)}
+.tab.active{background:var(--blue);border-color:var(--blue);color:#fff;
+  box-shadow:0 2px 8px rgba(26,86,219,.3)}
+
+/* ─── Form controls ─── */
+label{display:block;font-size:.83rem;font-weight:600;color:var(--gray-600);margin-bottom:5px}
+input[type=text],input[type=number],select,textarea{
+  width:100%;padding:10px 13px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);
+  font-family:var(--font);font-size:.9rem;color:var(--gray-800);background:#fff;
+  transition:border-color .15s,box-shadow .15s;outline:none}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.12)}
+textarea{resize:vertical;min-height:120px;font-size:.82rem;line-height:1.5}
+select{-webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:36px}
+.row{display:grid;gap:14px}
+.row-2{grid-template-columns:1fr 1fr}
+.row-3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:560px){.row-2,.row-3{grid-template-columns:1fr}}
+
+/* ─── Buttons ─── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:11px 20px;border:none;border-radius:var(--radius-sm);
+  font-family:var(--font);font-size:.9rem;font-weight:700;cursor:pointer;
+  transition:all .15s;text-decoration:none;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue-dark)}
+.btn-primary:active{background:#0e3399}
+.btn-success{background:var(--green);color:#fff}
+.btn-outline{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}
+.btn-sm{padding:7px 14px;font-size:.82rem}
+.btn-danger{background:var(--red);color:#fff}
+.btn-group{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+
+/* ─── Data table ─── */
+.data-hint{font-size:.78rem;color:var(--gray-400);margin-bottom:8px}
+.col-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.col-chip{background:var(--blue-light);color:var(--blue-dark);
+  border-radius:20px;padding:4px 11px;font-size:.78rem;font-weight:600;
+  display:inline-flex;align-items:center;gap:5px}
+.col-chip .rm{cursor:pointer;opacity:.6;font-size:.9rem}
+.col-chip .rm:hover{opacity:1}
+
+/* ─── Results ─── */
+.result-box{background:var(--gray-50);border:1.5px solid var(--gray-200);
+  border-radius:var(--radius-sm);padding:16px;margin-top:16px}
+.result-title{font-size:.85rem;font-weight:700;color:var(--gray-600);
+  margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.stat-item{background:#fff;border:1px solid var(--gray-200);border-radius:10px;
+  padding:12px 14px;text-align:center}
+.stat-label{font-size:.72rem;color:var(--gray-400);font-weight:600;margin-bottom:4px;
+  text-transform:uppercase;letter-spacing:.03em}
+.stat-value{font-size:1.2rem;font-weight:800;color:var(--blue-dark)}
+.stat-value.green{color:var(--green)}
+.stat-value.red{color:var(--red)}
+
+/* ─── Scrollable table ─── */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:.83rem}
+th{background:var(--blue);color:#fff;padding:9px 13px;text-align:left;
+  font-weight:700;white-space:nowrap}
+td{padding:8px 13px;border-bottom:1px solid var(--gray-100);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:nth-child(even) td{background:var(--gray-50)}
+.sig{color:var(--green);font-weight:700}
+.not-sig{color:var(--red)}
+
+/* ─── Interpretation box ─── */
+.interp{background:var(--green-light);border:1.5px solid #aed9be;border-radius:10px;
+  padding:13px 16px;margin-top:12px;font-size:.85rem;line-height:1.6}
+.interp.warn{background:var(--orange-light);border-color:#f0d38a}
+.interp.info{background:var(--blue-light);border-color:#b3c9f7}
+
+/* ─── Section panels ─── */
+.panel{display:none}
+.panel.active{display:block}
+
+/* ─── Toast ─── */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--gray-800);color:#fff;padding:11px 22px;border-radius:30px;
+  font-size:.85rem;font-weight:600;z-index:999;opacity:0;transition:all .25s;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ─── Alpha note ─── */
+.alpha-note{font-size:.75rem;color:var(--gray-400);margin-top:8px}
+
+/* ─── Print / Export ─── */
+.export-bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;
+  border-top:1px solid var(--gray-200);padding-top:14px}
+
+/* ─── Loading ─── */
+.spinner{display:inline-block;width:16px;height:16px;
+  border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;
+  border-radius:50%;animation:spin .65s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.empty-state{text-align:center;padding:36px 20px;color:var(--gray-400)}
+.empty-state .big{font-size:2.5rem;margin-bottom:8px}
+.empty-state p{font-size:.88rem}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-icon">📊</div>
+    <div>
+      <h1>StatPad <span class="badge">ฟรี ไม่จำกัดเวลา</span></h1>
+      <p>โปรแกรมสถิติ — ทำงานในเบราว์เซอร์ ไม่ต้องติดตั้ง</p>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="showPanel('data')">📥 นำเข้าข้อมูล</button>
+    <button class="tab" onclick="showPanel('desc')">📈 สถิติเชิงพรรณนา</button>
+    <button class="tab" onclick="showPanel('freq')">📊 ความถี่ / ร้อยละ</button>
+    <button class="tab" onclick="showPanel('ttest')">⚖️ T-Test</button>
+    <button class="tab" onclick="showPanel('anova')">🔬 ANOVA</button>
+    <button class="tab" onclick="showPanel('corr')">🔗 สหสัมพันธ์</button>
+    <button class="tab" onclick="showPanel('chi')">✅ Chi-Square</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PANEL 1 — Data Import
+  ══════════════════════════════════════════════════ -->
+  <div id="panel-data" class="panel active">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-blue">📥</div>
+        นำเข้าข้อมูล
+      </div>
+
+      <label>วิธีนำเข้า</label>
+      <div class="tabs" style="margin-bottom:14px">
+        <button class="tab active" id="import-tab-paste" onclick="switchImport('paste')">📋 วาง (Paste)</button>
+        <button class="tab" id="import-tab-csv" onclick="switchImport('csv')">📂 ไฟล์ CSV</button>
+        <button class="tab" id="import-tab-manual" onclick="switchImport('manual')">✏️ กรอกเอง</button>
+      </div>
+
+      <!-- Paste mode -->
+      <div id="import-paste">
+        <p class="data-hint">คัดลอกข้อมูลจาก Excel หรือ Google Sheets แล้ววางด้านล่าง (แถวแรกต้องเป็นหัวตาราง)</p>
+        <textarea id="paste-input" placeholder="วางข้อมูลตรงนี้ เช่น&#10;เพศ	อายุ	คะแนน&#10;ชาย	20	85&#10;หญิง	22	90"></textarea>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="importPaste()">📥 นำเข้าข้อมูล</button>
+          <button class="btn btn-outline" onclick="loadSampleData()">🎲 ลองข้อมูลตัวอย่าง</button>
+        </div>
+      </div>
+
+      <!-- CSV file -->
+      <div id="import-csv" style="display:none">
+        <p class="data-hint">เลือกไฟล์ .csv (Encoding: UTF-8 หรือ TIS-620)</p>
+        <input type="file" id="csv-file" accept=".csv,.txt" onchange="importCSV(event)">
+        <div class="btn-group" style="margin-top:12px">
+          <button class="btn btn-outline" onclick="loadSampleData()">🎲 ลองข้อมูลตัวอย่าง</button>
+        </div>
+      </div>
+
+      <!-- Manual entry -->
+      <div id="import-manual" style="display:none">
+        <div class="row row-2" style="margin-bottom:12px">
+          <div>
+            <label>ชื่อตัวแปร (กด Enter เพื่อเพิ่ม)</label>
+            <input type="text" id="manual-varname" placeholder="เช่น คะแนนสอบ" onkeydown="if(event.key==='Enter')addManualCol()">
+          </div>
+          <div style="display:flex;align-items:flex-end">
+            <button class="btn btn-outline" style="width:100%" onclick="addManualCol()">+ เพิ่มตัวแปร</button>
+          </div>
+        </div>
+        <div class="col-list" id="manual-cols"></div>
+        <div id="manual-entry-area" style="margin-top:14px;display:none">
+          <label>กรอกข้อมูล (แต่ละบรรทัด = 1 คน แต่ละตัวแปรคั่นด้วย Tab หรือ ,)</label>
+          <textarea id="manual-data" placeholder="ตัวอย่าง:&#10;85,90,78&#10;92,88,95"></textarea>
+          <button class="btn btn-primary" style="margin-top:10px" onclick="importManual()">📥 นำเข้า</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Preview -->
+    <div class="card" id="preview-card" style="display:none">
+      <div class="card-title">
+        <div class="icon icon-green">👁️</div>
+        ตัวอย่างข้อมูล
+        <span id="row-count-badge" class="badge" style="background:var(--green-light);color:var(--green);margin-left:4px"></span>
+      </div>
+      <div class="tbl-wrap" id="preview-table"></div>
+      <div class="btn-group" style="margin-top:12px">
+        <button class="btn btn-danger btn-sm" onclick="clearData()">🗑️ ล้างข้อมูล</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PANEL 2 — Descriptive Stats
+  ══════════════════════════════════════════════════ -->
+  <div id="panel-desc" class="panel">
+    <div class="card">
+      <div class="card-title"><div class="icon icon-blue">📈</div>สถิติเชิงพรรณนา (Descriptive Statistics)</div>
+      <label>เลือกตัวแปร (ตัวเลข) — เลือกได้หลายตัว</label>
+      <select id="desc-vars" multiple size="5" style="font-size:.85rem"></select>
+      <p class="alpha-note">กด Ctrl/⌘ + แตะ เพื่อเลือกหลายตัวแปรบน iPad</p>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="runDesc()">▶ คำนวณ</button>
+        <button class="btn btn-outline btn-sm" onclick="selectAllDesc()">เลือกทั้งหมด</button>
+      </div>
+      <div id="desc-result"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PANEL 3 — Frequency / Percentage
+  ══════════════════════════════════════════════════ -->
+  <div id="panel-freq" class="panel">
+    <div class="card">
+      <div class="card-title"><div class="icon icon-blue">📊</div>ตารางความถี่และร้อยละ (Frequency Table)</div>
+      <label>เลือกตัวแปร</label>
+      <select id="freq-var" style="max-width:320px"></select>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="runFreq()">▶ คำนวณ</button>
+      </div>
+      <div id="freq-result"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PANEL 4 — T-Test
+  ══════════════════════════════════════════════════ -->
+  <div id="panel-ttest" class="panel">
+    <div class="card">
+      <div class="card-title"><div class="icon icon-orange">⚖️</div>การทดสอบค่าที (T-Test)</div>
+
+      <label>ประเภทการทดสอบ</label>
+      <select id="ttest-type" onchange="updateTTestUI()" style="max-width:320px">
+        <option value="one">One-Sample T-Test (เทียบกับค่าคงที่)</option>
+        <option value="ind">Independent Samples T-Test (2 กลุ่มอิสระ)</option>
+        <option value="paired">Paired Samples T-Test (ก่อน-หลัง)</option>
+      </select>
+
+      <div id="ttest-ui" style="margin-top:16px"></div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="runTTest()">▶ คำนวณ</button>
+      </div>
+      <div id="ttest-result"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PANEL 5 — One-way ANOVA
+  ══════════════════════════════════════════════════ -->
+  <div id="panel-anova" class="panel">
+    <div class="card">
+      <div class="card-title"><div class="icon icon-orange">🔬</div>การวิเคราะห์ความแปรปรวน (One-Way ANOVA)</div>
+      <div class="row row-2">
+        <div>
+          <label>ตัวแปรตาม (ค่าตัวเลข)</label>
+          <select id="anova-dep"></select>
+        </div>
+        <div>
+          <label>ตัวแปรต้น / กลุ่ม</label>
+          <select id="anova-grp"></select>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="runANOVA()">▶ คำนวณ</button>
+      </div>
+      <div id="anova-result"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PANEL 6 — Correlation
+  ══════════════════════════════════════════════════ -->
+  <div id="panel-corr" class="panel">
+    <div class="card">
+      <div class="card-title"><div class="icon icon-blue">🔗</div>สหสัมพันธ์ (Correlation)</div>
+      <div class="row row-2">
+        <div>
+          <label>วิธี</label>
+          <select id="corr-method">
+            <option value="pearson">Pearson (ข้อมูลปกติ)</option>
+            <option value="spearman">Spearman (อันดับ)</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <label>เลือกตัวแปร (ตัวเลข) — เลือกได้หลายตัว</label>
+        <select id="corr-vars" multiple size="5"></select>
+        <p class="alpha-note">กด Ctrl/⌘ + แตะ เพื่อเลือกหลายตัวแปร</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="runCorr()">▶ คำนวณ</button>
+        <button class="btn btn-outline btn-sm" onclick="selectAllCorr()">เลือกทั้งหมด</button>
+      </div>
+      <div id="corr-result"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PANEL 7 — Chi-Square
+  ══════════════════════════════════════════════════ -->
+  <div id="panel-chi" class="panel">
+    <div class="card">
+      <div class="card-title"><div class="icon icon-green">✅</div>ไคสแควร์ (Chi-Square Test of Independence)</div>
+      <div class="row row-2">
+        <div>
+          <label>ตัวแปรแถว (Row)</label>
+          <select id="chi-row"></select>
+        </div>
+        <div>
+          <label>ตัวแปรคอลัมน์ (Column)</label>
+          <select id="chi-col"></select>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="runChi()">▶ คำนวณ</button>
+      </div>
+      <div id="chi-result"></div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+let DATA = [];          // array of objects
+let COLS = [];          // column names
+let NUM_COLS = [];      // numeric column names
+
+/* ═══════════════════════════════════════════════════════
+   UI HELPERS
+═══════════════════════════════════════════════════════ */
+function showPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tabs > .tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  const idx = ['data','desc','freq','ttest','anova','corr','chi'].indexOf(id);
+  document.querySelectorAll('.tabs > .tab')[idx]?.classList.add('active');
+  if(id!=='data') refreshSelects();
+}
+
+function toast(msg, dur=2500){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), dur);
+}
+
+function switchImport(mode){
+  ['paste','csv','manual'].forEach(m=>{
+    document.getElementById('import-'+m).style.display = m===mode?'':'none';
+    document.getElementById('import-tab-'+m)?.classList.toggle('active',m===mode);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   DATA IMPORT
+═══════════════════════════════════════════════════════ */
+function parseTabular(text){
+  // auto-detect delimiter
+  const firstLine = text.trim().split('\n')[0];
+  const delim = firstLine.includes('\t') ? '\t' : ',';
+  const lines = text.trim().split('\n').filter(l=>l.trim());
+  if(lines.length < 2) return null;
+  const headers = lines[0].split(delim).map(h=>h.trim().replace(/^"|"$/g,''));
+  const rows = [];
+  for(let i=1;i<lines.length;i++){
+    const vals = lines[i].split(delim).map(v=>v.trim().replace(/^"|"$/g,''));
+    if(vals.length === 0 || vals.join('').trim() === '') continue;
+    const obj = {};
+    headers.forEach((h,j)=>{ obj[h] = vals[j] !== undefined ? vals[j] : ''; });
+    rows.push(obj);
+  }
+  return {headers, rows};
+}
+
+function loadData(headers, rows){
+  COLS = headers;
+  DATA = rows;
+  NUM_COLS = headers.filter(h=>{
+    const sample = rows.slice(0,50).map(r=>r[h]).filter(v=>v!=='');
+    return sample.length > 0 && sample.every(v=>!isNaN(parseFloat(v)));
+  });
+  showPreview();
+  toast(`✅ โหลดข้อมูลสำเร็จ ${rows.length} แถว ${headers.length} ตัวแปร`);
+}
+
+function importPaste(){
+  const text = document.getElementById('paste-input').value;
+  if(!text.trim()){ toast('⚠️ ยังไม่มีข้อมูล'); return; }
+  const parsed = parseTabular(text);
+  if(!parsed){ toast('❌ รูปแบบข้อมูลไม่ถูกต้อง'); return; }
+  loadData(parsed.headers, parsed.rows);
+}
+
+function importCSV(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{ const parsed = parseTabular(e.target.result); if(parsed) loadData(parsed.headers, parsed.rows); else toast('❌ ไฟล์ไม่ถูกต้อง'); };
+  reader.readAsText(file, 'UTF-8');
+}
+
+// Manual column entry
+const manualCols = [];
+function addManualCol(){
+  const inp = document.getElementById('manual-varname');
+  const name = inp.value.trim();
+  if(!name){ toast('กรุณาใส่ชื่อตัวแปร'); return; }
+  if(manualCols.includes(name)){ toast('ชื่อซ้ำ'); return; }
+  manualCols.push(name);
+  inp.value='';
+  renderManualCols();
+}
+function removeManualCol(name){
+  manualCols.splice(manualCols.indexOf(name),1);
+  renderManualCols();
+}
+function renderManualCols(){
+  const area = document.getElementById('manual-cols');
+  area.innerHTML = manualCols.map(c=>`<span class="col-chip">${c}<span class="rm" onclick="removeManualCol('${c}')">✕</span></span>`).join('');
+  document.getElementById('manual-entry-area').style.display = manualCols.length?'':'none';
+}
+function importManual(){
+  const text = document.getElementById('manual-data').value;
+  if(!manualCols.length){ toast('เพิ่มตัวแปรก่อน'); return; }
+  const fake = manualCols.join(',') + '\n' + text;
+  const parsed = parseTabular(fake);
+  if(parsed) loadData(parsed.headers, parsed.rows);
+}
+
+function loadSampleData(){
+  const text = `เพศ\tคณะ\tชั้นปี\tGPA\tคะแนนวิชาA\tคะแนนวิชาB\tชั่วโมงเรียน\tความพึงพอใจ
+ชาย\tวิศวกรรม\t1\t3.20\t78\t82\t40\t4
+หญิง\tวิทยาศาสตร์\t2\t3.65\t85\t88\t45\t5
+ชาย\tวิศวกรรม\t1\t2.95\t72\t70\t38\t3
+หญิง\tศิลปศาสตร์\t3\t3.80\t90\t92\t50\t5
+ชาย\tวิทยาศาสตร์\t2\t3.10\t80\t75\t42\t4
+หญิง\tวิศวกรรม\t2\t3.45\t83\t86\t44\t4
+ชาย\tศิลปศาสตร์\t3\t3.00\t70\t68\t35\t3
+หญิง\tวิทยาศาสตร์\t1\t3.70\t88\t91\t48\t5
+ชาย\tวิศวกรรม\t3\t2.80\t65\t60\t32\t2
+หญิง\tศิลปศาสตร์\t2\t3.55\t87\t89\t46\t5
+ชาย\tวิทยาศาสตร์\t1\t3.15\t76\t74\t40\t3
+หญิง\tวิศวกรรม\t3\t3.90\t92\t95\t52\t5
+ชาย\tศิลปศาสตร์\t1\t2.70\t60\t65\t30\t2
+หญิง\tวิทยาศาสตร์\t2\t3.40\t82\t84\t43\t4
+ชาย\tวิศวกรรม\t2\t3.25\t79\t77\t41\t4
+หญิง\tศิลปศาสตร์\t1\t3.60\t86\t90\t47\t5
+ชาย\tวิทยาศาสตร์\t3\t3.05\t73\t71\t37\t3
+หญิง\tวิศวกรรม\t1\t3.75\t89\t93\t49\t5
+ชาย\tศิลปศาสตร์\t2\t2.90\t68\t66\t34\t3
+หญิง\tวิทยาศาสตร์\t3\t3.85\t91\t94\t51\t5`;
+  document.getElementById('paste-input').value = text;
+  switchImport('paste');
+  importPaste();
+}
+
+function clearData(){
+  DATA = []; COLS = []; NUM_COLS = [];
+  document.getElementById('preview-card').style.display = 'none';
+  toast('🗑️ ล้างข้อมูลแล้ว');
+}
+
+function showPreview(){
+  const card = document.getElementById('preview-card');
+  card.style.display = '';
+  document.getElementById('row-count-badge').textContent = `${DATA.length} แถว / ${COLS.length} ตัวแปร`;
+  const max = Math.min(DATA.length, 8);
+  let html = '<table><thead><tr>'+COLS.map(c=>`<th>${c}</th>`).join('')+'</tr></thead><tbody>';
+  for(let i=0;i<max;i++){
+    html += '<tr>'+COLS.map(c=>`<td>${DATA[i][c]??''}</td>`).join('')+'</tr>';
+  }
+  if(DATA.length > max) html += `<tr><td colspan="${COLS.length}" style="text-align:center;color:#9ca3af;padding:10px">... และอีก ${DATA.length-max} แถว</td></tr>`;
+  html += '</tbody></table>';
+  document.getElementById('preview-table').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   REFRESH SELECTS
+═══════════════════════════════════════════════════════ */
+function refreshSelects(){
+  if(!DATA.length) return;
+  fillSelect('desc-vars', NUM_COLS, true);
+  fillSelect('freq-var', COLS);
+  fillSelect('anova-dep', NUM_COLS);
+  fillSelect('anova-grp', COLS);
+  fillSelect('corr-vars', NUM_COLS, true);
+  fillSelect('chi-row', COLS);
+  fillSelect('chi-col', COLS);
+  updateTTestUI();
+}
+
+function fillSelect(id, list, multi=false){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const prev = multi ? [...el.selectedOptions].map(o=>o.value) : el.value;
+  el.innerHTML = list.map(c=>`<option value="${c}">${c}</option>`).join('');
+  if(multi){ [...el.options].forEach(o=>{ if(prev.includes(o.value)) o.selected=true; }); }
+  else if(prev && list.includes(prev)) el.value = prev;
+}
+
+function selectAllDesc(){
+  [...document.getElementById('desc-vars').options].forEach(o=>o.selected=true);
+}
+function selectAllCorr(){
+  [...document.getElementById('corr-vars').options].forEach(o=>o.selected=true);
+}
+
+function getSelected(id){
+  return [...document.getElementById(id).selectedOptions].map(o=>o.value);
+}
+
+/* ═══════════════════════════════════════════════════════
+   MATH UTILITIES
+═══════════════════════════════════════════════════════ */
+function numVals(col){
+  return DATA.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));
+}
+
+function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
+
+function variance(arr, sample=true){
+  const m = mean(arr);
+  return arr.reduce((s,x)=>s+(x-m)**2,0)/(arr.length-(sample?1:0));
+}
+
+function sd(arr, sample=true){ return Math.sqrt(variance(arr,sample)); }
+
+function median(arr){
+  const s=[...arr].sort((a,b)=>a-b);
+  const m=Math.floor(s.length/2);
+  return s.length%2===0 ? (s[m-1]+s[m])/2 : s[m];
+}
+
+function percentile(arr,p){
+  const s=[...arr].sort((a,b)=>a-b);
+  const i=(p/100)*(s.length-1);
+  const lo=Math.floor(i), hi=Math.ceil(i);
+  return s[lo]+(s[hi]-s[lo])*(i-lo);
+}
+
+// t-distribution CDF (two-tailed p) — Abramowitz & Stegun approximation
+function tDist2(t, df){
+  // use incomplete beta regularized
+  const x = df/(df+t*t);
+  return incompleteBeta(x, df/2, 0.5);
+}
+
+function incompleteBeta(x, a, b){
+  // continued fraction (Lentz)
+  if(x < 0 || x > 1) return 0;
+  if(x === 0) return 0;
+  if(x === 1) return 1;
+  const lbeta = lgamma(a)+lgamma(b)-lgamma(a+b);
+  const front = Math.exp(a*Math.log(x)+b*Math.log(1-x)-lbeta)/a;
+  return front * betaCF(x,a,b);
+}
+
+function betaCF(x,a,b){
+  const MAXIT=200, EPS=3e-7, FPMIN=1e-30;
+  const qab=a+b, qap=a+1, qam=a-1;
+  let c=1, d=1-qab*x/qap; if(Math.abs(d)<FPMIN)d=FPMIN; d=1/d;
+  let h=d;
+  for(let m=1;m<=MAXIT;m++){
+    let m2=2*m;
+    let aa=m*(b-m)*x/((qam+m2)*(a+m2));
+    d=1+aa*d; if(Math.abs(d)<FPMIN)d=FPMIN;
+    c=1+aa/c; if(Math.abs(c)<FPMIN)c=FPMIN;
+    d=1/d; h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+    d=1+aa*d; if(Math.abs(d)<FPMIN)d=FPMIN;
+    c=1+aa/c; if(Math.abs(c)<FPMIN)c=FPMIN;
+    d=1/d; let del=d*c; h*=del;
+    if(Math.abs(del-1)<EPS) break;
+  }
+  return h;
+}
+
+function lgamma(z){
+  // Lanczos
+  const g=7, c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,
+    771.32342877765313,-176.61502916214059,12.507343278686905,
+    -0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(z<0.5) return Math.log(Math.PI/Math.sin(Math.PI*z))-lgamma(1-z);
+  z--;
+  let x=c[0]; for(let i=1;i<g+2;i++) x+=c[i]/(z+i);
+  const t=z+g+0.5;
+  return 0.5*Math.log(2*Math.PI)+(z+0.5)*Math.log(t)-t+Math.log(x);
+}
+
+// F-distribution p-value
+function fDist(F, df1, df2){
+  const x = df2/(df2+df1*F);
+  return incompleteBeta(x, df2/2, df1/2);
+}
+
+// Chi-square p-value
+function chiDist(chi2, df){
+  return 1 - gammaInc(df/2, chi2/2);
+}
+
+function gammaInc(a, x){
+  if(x < 0) return 0;
+  if(x < a+1){
+    let ap=a, sum=1/a, del=sum;
+    for(let n=1;n<200;n++){
+      ap++; del*=x/ap; sum+=del;
+      if(Math.abs(del)<Math.abs(sum)*3e-7) break;
+    }
+    return sum*Math.exp(-x+a*Math.log(x)-lgamma(a));
+  } else {
+    let b=x+1-a, c=1e30, d=1/b, h=d, del;
+    for(let i=1;i<=200;i++){
+      const an=-i*(i-a); b+=2;
+      d=an*d+b; if(Math.abs(d)<1e-30)d=1e-30;
+      c=b+an/c; if(Math.abs(c)<1e-30)c=1e-30;
+      d=1/d; del=d*c; h*=del;
+      if(Math.abs(del-1)<3e-7) break;
+    }
+    return 1-Math.exp(-x+a*Math.log(x)-lgamma(a))*h;
+  }
+}
+
+function sigStars(p){ return p<.001?'***':p<.01?'**':p<.05?'*':p<.1?'†':''; }
+function fmtP(p){ return p<.001?'< .001':p.toFixed(3); }
+function fmt(n,d=3){ return isNaN(n)?'—':Number(n.toFixed(d)); }
+
+/* ═══════════════════════════════════════════════════════
+   DESCRIPTIVE STATS
+═══════════════════════════════════════════════════════ */
+function runDesc(){
+  if(!DATA.length){ toast('นำเข้าข้อมูลก่อน'); return; }
+  const vars = getSelected('desc-vars');
+  if(!vars.length){ toast('เลือกตัวแปรอย่างน้อย 1 ตัว'); return; }
+
+  let html = '<div class="result-box">';
+  html += '<div class="result-title">📊 ผลการวิเคราะห์</div>';
+  html += '<div class="tbl-wrap"><table><thead><tr>';
+  html += '<th>ตัวแปร</th><th>N</th><th>Min</th><th>Max</th><th>Mean</th><th>SD</th><th>Median</th><th>Q1</th><th>Q3</th><th>Skew</th></tr></thead><tbody>';
+
+  vars.forEach(v=>{
+    const arr = numVals(v);
+    if(!arr.length){ html += `<tr><td>${v}</td><td colspan="9" style="color:#9ca3af">ไม่มีข้อมูลตัวเลข</td></tr>`; return; }
+    const m = mean(arr), s = sd(arr), med = median(arr);
+    const q1 = percentile(arr,25), q3 = percentile(arr,75);
+    const mn = Math.min(...arr), mx = Math.max(...arr);
+    const skew = arr.reduce((a,x)=>a+((x-m)/s)**3,0)/arr.length;
+    html += `<tr><td><b>${v}</b></td><td>${arr.length}</td><td>${fmt(mn,2)}</td><td>${fmt(mx,2)}</td>
+      <td>${fmt(m,2)}</td><td>${fmt(s,2)}</td><td>${fmt(med,2)}</td>
+      <td>${fmt(q1,2)}</td><td>${fmt(q3,2)}</td><td>${fmt(skew,3)}</td></tr>`;
+  });
+
+  html += '</tbody></table></div>';
+
+  // card grid for first var
+  if(vars.length === 1){
+    const arr = numVals(vars[0]);
+    if(arr.length){
+      const m=mean(arr),s=sd(arr);
+      html += `<div class="stat-grid" style="margin-top:14px">
+        <div class="stat-item"><div class="stat-label">จำนวน (N)</div><div class="stat-value">${arr.length}</div></div>
+        <div class="stat-item"><div class="stat-label">ค่าเฉลี่ย</div><div class="stat-value">${fmt(m,2)}</div></div>
+        <div class="stat-item"><div class="stat-label">SD</div><div class="stat-value">${fmt(s,2)}</div></div>
+        <div class="stat-item"><div class="stat-label">Min</div><div class="stat-value">${fmt(Math.min(...arr),2)}</div></div>
+        <div class="stat-item"><div class="stat-label">Max</div><div class="stat-value">${fmt(Math.max(...arr),2)}</div></div>
+        <div class="stat-item"><div class="stat-label">Median</div><div class="stat-value">${fmt(median(arr),2)}</div></div>
+      </div>`;
+    }
+  }
+
+  html += exportBar('desc');
+  html += '</div>';
+  document.getElementById('desc-result').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   FREQUENCY TABLE
+═══════════════════════════════════════════════════════ */
+function runFreq(){
+  if(!DATA.length){ toast('นำเข้าข้อมูลก่อน'); return; }
+  const v = document.getElementById('freq-var').value;
+  if(!v){ toast('เลือกตัวแปร'); return; }
+
+  const counts = {};
+  DATA.forEach(r=>{ const val=r[v]??'(ว่าง)'; counts[val]=(counts[val]||0)+1; });
+  const total = DATA.length;
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  let cum = 0;
+
+  let html = `<div class="result-box"><div class="result-title">📊 ตารางความถี่: ${v}</div>
+    <div class="tbl-wrap"><table><thead><tr>
+    <th>ค่า</th><th>ความถี่</th><th>ร้อยละ (%)</th><th>ร้อยละสะสม</th></tr></thead><tbody>`;
+
+  sorted.forEach(([val,cnt])=>{
+    cum += cnt;
+    const pct = (cnt/total*100).toFixed(1);
+    const cumpct = (cum/total*100).toFixed(1);
+    html += `<tr><td>${val}</td><td>${cnt}</td><td>${pct}%</td><td>${cumpct}%</td></tr>`;
+  });
+
+  html += `<tr style="font-weight:700;background:var(--blue-light)">
+    <td>รวม</td><td>${total}</td><td>100.0%</td><td>100.0%</td></tr>`;
+  html += '</tbody></table></div>';
+  html += exportBar('freq');
+  html += '</div>';
+  document.getElementById('freq-result').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   T-TEST UI
+═══════════════════════════════════════════════════════ */
+function updateTTestUI(){
+  const type = document.getElementById('ttest-type').value;
+  const ui = document.getElementById('ttest-ui');
+  const opts = NUM_COLS.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const catOpts = COLS.map(c=>`<option value="${c}">${c}</option>`).join('');
+
+  if(type==='one'){
+    ui.innerHTML = `<div class="row row-2">
+      <div><label>ตัวแปร</label><select id="tt-var">${opts}</select></div>
+      <div><label>ค่าอ้างอิง (μ₀)</label><input type="number" id="tt-mu" value="0" step="any"></div>
+    </div>`;
+  } else if(type==='ind'){
+    ui.innerHTML = `<div class="row row-2">
+      <div><label>ตัวแปรตาม (ตัวเลข)</label><select id="tt-dep">${opts}</select></div>
+      <div><label>ตัวแปรกลุ่ม (2 กลุ่ม)</label><select id="tt-grp">${catOpts}</select></div>
+    </div>`;
+  } else {
+    ui.innerHTML = `<div class="row row-2">
+      <div><label>ตัวแปรที่ 1 (ก่อน)</label><select id="tt-v1">${opts}</select></div>
+      <div><label>ตัวแปรที่ 2 (หลัง)</label><select id="tt-v2">${opts}</select></div>
+    </div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   T-TEST CALCULATION
+═══════════════════════════════════════════════════════ */
+function runTTest(){
+  if(!DATA.length){ toast('นำเข้าข้อมูลก่อน'); return; }
+  const type = document.getElementById('ttest-type').value;
+  let res = '';
+
+  if(type==='one'){
+    const v = document.getElementById('tt-var')?.value;
+    const mu = parseFloat(document.getElementById('tt-mu')?.value??0);
+    if(!v) return;
+    const arr = numVals(v);
+    const n=arr.length, m=mean(arr), s=sd(arr);
+    const t = (m-mu)/(s/Math.sqrt(n));
+    const df = n-1;
+    const p = tDist2(Math.abs(t), df);
+    res = ttestResult(`One-Sample T-Test: ${v}`,
+      [{label:'N',val:n},{label:'Mean',val:fmt(m,3)},{label:'SD',val:fmt(s,3)},
+       {label:'μ₀',val:mu},{label:'t',val:fmt(t,3)},{label:'df',val:df},{label:'p',val:fmtP(p)}],
+      p, t, `ค่าเฉลี่ย${p<.05?'แตกต่างจาก':'ไม่แตกต่างจาก'} μ₀=${mu} อย่างมีนัยสำคัญทางสถิติ (p ${p<.001?'< .001':'= '+fmtP(p)})`);
+
+  } else if(type==='ind'){
+    const dep = document.getElementById('tt-dep')?.value;
+    const grp = document.getElementById('tt-grp')?.value;
+    if(!dep||!grp) return;
+    const groups = {};
+    DATA.forEach(r=>{
+      const g = r[grp]; const v = parseFloat(r[dep]);
+      if(!isNaN(v)){ if(!groups[g])groups[g]=[]; groups[g].push(v); }
+    });
+    const keys = Object.keys(groups);
+    if(keys.length < 2){ toast('ตัวแปรกลุ่มต้องมีอย่างน้อย 2 กลุ่ม'); return; }
+    if(keys.length > 2){ toast('⚠️ พบมากกว่า 2 กลุ่ม — ใช้เฉพาะ 2 กลุ่มแรก'); }
+    const [g1,g2] = [groups[keys[0]], groups[keys[1]]];
+    const n1=g1.length, n2=g2.length, m1=mean(g1), m2=mean(g2), s1=sd(g1), s2=sd(g2);
+    // Welch's t
+    const se = Math.sqrt(s1*s1/n1+s2*s2/n2);
+    const t = (m1-m2)/se;
+    const df = (s1*s1/n1+s2*s2/n2)**2 / ((s1*s1/n1)**2/(n1-1)+(s2*s2/n2)**2/(n2-1));
+    const p = tDist2(Math.abs(t), df);
+    res = ttestResult(`Independent T-Test: ${dep} by ${grp}`,
+      [{label:`N(${keys[0]})`,val:n1},{label:`M(${keys[0]})`,val:fmt(m1,3)},
+       {label:`SD(${keys[0]})`,val:fmt(s1,3)},{label:`N(${keys[1]})`,val:n2},
+       {label:`M(${keys[1]})`,val:fmt(m2,3)},{label:`SD(${keys[1]})`,val:fmt(s2,3)},
+       {label:'t',val:fmt(t,3)},{label:'df',val:fmt(df,2)},{label:'p',val:fmtP(p)}],
+      p, t, `ค่าเฉลี่ย${dep}ของกลุ่ม${p<.05?'แตกต่าง':'ไม่แตกต่าง'}กันอย่างมีนัยสำคัญ (p ${p<.001?'< .001':'= '+fmtP(p)})`);
+
+  } else {
+    const v1 = document.getElementById('tt-v1')?.value;
+    const v2 = document.getElementById('tt-v2')?.value;
+    if(!v1||!v2) return;
+    const pairs = DATA.map(r=>[parseFloat(r[v1]),parseFloat(r[v2])]).filter(p=>!isNaN(p[0])&&!isNaN(p[1]));
+    const diff = pairs.map(p=>p[0]-p[1]);
+    const n=diff.length, m=mean(diff), s=sd(diff);
+    const t = m/(s/Math.sqrt(n));
+    const df = n-1;
+    const p = tDist2(Math.abs(t), df);
+    res = ttestResult(`Paired T-Test: ${v1} vs ${v2}`,
+      [{label:'N pairs',val:n},{label:'Mean diff',val:fmt(m,3)},{label:'SD diff',val:fmt(s,3)},
+       {label:'t',val:fmt(t,3)},{label:'df',val:df},{label:'p',val:fmtP(p)}],
+      p, t, `ค่าเฉลี่ยก่อน-หลัง${p<.05?'แตกต่าง':'ไม่แตกต่าง'}กันอย่างมีนัยสำคัญ (p ${p<.001?'< .001':'= '+fmtP(p)})`);
+  }
+
+  document.getElementById('ttest-result').innerHTML = res;
+}
+
+function ttestResult(title, stats, p, t, interp){
+  const sig = p < .05;
+  let html = `<div class="result-box"><div class="result-title">⚖️ ${title}</div>
+    <div class="stat-grid">`;
+  stats.forEach(s=>{ html += `<div class="stat-item"><div class="stat-label">${s.label}</div>
+    <div class="stat-value${s.label==='p'?(sig?' green':' red'):''}">${s.val}</div></div>`; });
+  html += `</div>
+    <div class="interp${sig?'':' warn'}" style="margin-top:12px">
+      ${sig?'✅':'⚠️'} ${interp} ${sigStars(p)}
+    </div>`;
+  html += exportBar('ttest');
+  html += '</div>';
+  return html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   ONE-WAY ANOVA
+═══════════════════════════════════════════════════════ */
+function runANOVA(){
+  if(!DATA.length){ toast('นำเข้าข้อมูลก่อน'); return; }
+  const dep = document.getElementById('anova-dep').value;
+  const grp = document.getElementById('anova-grp').value;
+
+  const groups = {};
+  DATA.forEach(r=>{
+    const g=r[grp], v=parseFloat(r[dep]);
+    if(!isNaN(v)){ if(!groups[g])groups[g]=[]; groups[g].push(v); }
+  });
+
+  const keys = Object.keys(groups).filter(k=>groups[k].length>=2);
+  if(keys.length < 2){ toast('ต้องมีอย่างน้อย 2 กลุ่ม และแต่ละกลุ่มมีข้อมูล ≥ 2'); return; }
+
+  const all = [].concat(...keys.map(k=>groups[k]));
+  const grandMean = mean(all);
+  const N = all.length, k = keys.length;
+
+  const ssBetween = keys.reduce((s,g)=>{ const gm=mean(groups[g]); return s+groups[g].length*(gm-grandMean)**2; },0);
+  const ssWithin  = keys.reduce((s,g)=>{ const gm=mean(groups[g]); return s+groups[g].reduce((a,v)=>a+(v-gm)**2,0); },0);
+  const dfB=k-1, dfW=N-k;
+  const msB=ssBetween/dfB, msW=ssWithin/dfW;
+  const F=msB/msW;
+  const p=fDist(F,dfB,dfW);
+  const eta2=ssBetween/(ssBetween+ssWithin);
+  const sig=p<.05;
+
+  let html=`<div class="result-box"><div class="result-title">🔬 ANOVA: ${dep} by ${grp}</div>
+    <div class="tbl-wrap"><table><thead><tr>
+    <th>Source</th><th>SS</th><th>df</th><th>MS</th><th>F</th><th>p</th><th>η²</th></tr></thead><tbody>
+    <tr><td>Between</td><td>${fmt(ssBetween,3)}</td><td>${dfB}</td><td>${fmt(msB,3)}</td>
+      <td>${fmt(F,3)}</td><td class="${sig?'sig':'not-sig'}">${fmtP(p)} ${sigStars(p)}</td><td>${fmt(eta2,3)}</td></tr>
+    <tr><td>Within</td><td>${fmt(ssWithin,3)}</td><td>${dfW}</td><td>${fmt(msW,3)}</td>
+      <td>—</td><td>—</td><td>—</td></tr>
+    <tr style="font-weight:700"><td>Total</td><td>${fmt(ssBetween+ssWithin,3)}</td><td>${N-1}</td>
+      <td>—</td><td>—</td><td>—</td><td>—</td></tr>
+    </tbody></table></div>`;
+
+  // Group means
+  html += `<div class="tbl-wrap" style="margin-top:10px"><table><thead><tr>
+    <th>กลุ่ม</th><th>N</th><th>Mean</th><th>SD</th></tr></thead><tbody>`;
+  keys.forEach(g=>{
+    const arr=groups[g];
+    html+=`<tr><td>${g}</td><td>${arr.length}</td><td>${fmt(mean(arr),3)}</td><td>${fmt(sd(arr),3)}</td></tr>`;
+  });
+  html += '</tbody></table></div>';
+
+  html += `<div class="interp${sig?'':' warn'}" style="margin-top:12px">
+    ${sig?'✅':'⚠️'} ${sig?'พบความแตกต่าง':'ไม่พบความแตกต่าง'}ของค่าเฉลี่ย${dep}ระหว่างกลุ่มอย่างมีนัยสำคัญ
+    F(${dfB},${dfW}) = ${fmt(F,3)}, p ${p<.001?'< .001':'= '+fmtP(p)}, η² = ${fmt(eta2,3)}
+    ${sig?'(ขนาดผล: '+(eta2<.06?'เล็ก':eta2<.14?'กลาง':'ใหญ่')+')':''}
+  </div>`;
+  html += exportBar('anova');
+  html += '</div>';
+  document.getElementById('anova-result').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CORRELATION
+═══════════════════════════════════════════════════════ */
+function runCorr(){
+  if(!DATA.length){ toast('นำเข้าข้อมูลก่อน'); return; }
+  const vars = getSelected('corr-vars');
+  if(vars.length < 2){ toast('เลือกอย่างน้อย 2 ตัวแปร'); return; }
+  const method = document.getElementById('corr-method').value;
+
+  // build paired arrays
+  function getPair(a,b){
+    const pairs=DATA.map(r=>[parseFloat(r[a]),parseFloat(r[b])]).filter(p=>!isNaN(p[0])&&!isNaN(p[1]));
+    return { x:pairs.map(p=>p[0]), y:pairs.map(p=>p[1]), n:pairs.length };
+  }
+
+  function rank(arr){
+    const idx=[...arr.keys()].sort((a,b)=>arr[a]-arr[b]);
+    const r=new Array(arr.length);
+    let i=0;
+    while(i<idx.length){
+      let j=i;
+      while(j<idx.length-1 && arr[idx[j+1]]===arr[idx[j]]) j++;
+      const avgR=(i+j)/2+1;
+      for(let k=i;k<=j;k++) r[idx[k]]=avgR;
+      i=j+1;
+    }
+    return r;
+  }
+
+  function pearson(x,y){
+    const mx=mean(x),my=mean(y);
+    const num=x.reduce((s,xi,i)=>s+(xi-mx)*(y[i]-my),0);
+    const den=Math.sqrt(x.reduce((s,xi)=>s+(xi-mx)**2,0)*y.reduce((s,yi)=>s+(yi-my)**2,0));
+    return den===0?0:num/den;
+  }
+
+  function corrP(r,n){
+    if(n<=2) return 1;
+    const t=r*Math.sqrt((n-2)/(1-r*r));
+    return tDist2(Math.abs(t),n-2);
+  }
+
+  let html=`<div class="result-box"><div class="result-title">🔗 Correlation Matrix (${method==='pearson'?'Pearson':'Spearman'})</div>
+    <div class="tbl-wrap"><table><thead><tr><th></th>`;
+  vars.forEach(v=>{ html+=`<th>${v}</th>`; });
+  html+='</tr></thead><tbody>';
+
+  vars.forEach((va,i)=>{
+    html+=`<tr><td><b>${va}</b></td>`;
+    vars.forEach((vb,j)=>{
+      if(i===j){ html+='<td style="background:var(--gray-100);text-align:center">—</td>'; return; }
+      const {x,y,n}=getPair(va,vb);
+      let r;
+      if(method==='spearman'){ r=pearson(rank(x),rank(y)); }
+      else { r=pearson(x,y); }
+      const p=corrP(r,n);
+      const sig=p<.05;
+      html+=`<td style="text-align:center${sig?';color:var(--green);font-weight:700':''}">${fmt(r,3)}${sigStars(p)}</td>`;
+    });
+    html+='</tr>';
+  });
+
+  html+='</tbody></table></div>';
+  html+=`<p class="alpha-note" style="margin-top:8px">* p&lt;.05 &nbsp;** p&lt;.01 &nbsp;*** p&lt;.001 &nbsp;† p&lt;.10 (two-tailed)</p>`;
+
+  // pairwise table
+  html+=`<div class="tbl-wrap" style="margin-top:12px"><table><thead><tr>
+    <th>คู่ตัวแปร</th><th>N</th><th>r</th><th>p</th><th>ความสัมพันธ์</th></tr></thead><tbody>`;
+  for(let i=0;i<vars.length-1;i++){
+    for(let j=i+1;j<vars.length;j++){
+      const {x,y,n}=getPair(vars[i],vars[j]);
+      let r;
+      if(method==='spearman') r=pearson(rank(x),rank(y));
+      else r=pearson(x,y);
+      const p=corrP(r,n);
+      const sig=p<.05;
+      const strength=Math.abs(r)<.2?'อ่อนมาก':Math.abs(r)<.4?'อ่อน':Math.abs(r)<.6?'ปานกลาง':Math.abs(r)<.8?'สูง':'สูงมาก';
+      const dir=r>0?'บวก':'ลบ';
+      html+=`<tr><td>${vars[i]} × ${vars[j]}</td><td>${n}</td>
+        <td class="${sig?'sig':'not-sig'}">${fmt(r,3)} ${sigStars(p)}</td>
+        <td>${fmtP(p)}</td><td>${sig?dir+' '+strength:'ไม่มีนัยสำคัญ'}</td></tr>`;
+    }
+  }
+  html+='</tbody></table></div>';
+  html+=exportBar('corr');
+  html+='</div>';
+  document.getElementById('corr-result').innerHTML=html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHI-SQUARE
+═══════════════════════════════════════════════════════ */
+function runChi(){
+  if(!DATA.length){ toast('นำเข้าข้อมูลก่อน'); return; }
+  const rv=document.getElementById('chi-row').value;
+  const cv=document.getElementById('chi-col').value;
+  if(rv===cv){ toast('ต้องเลือกตัวแปรต่างกัน'); return; }
+
+  const rows=[], cols=[];
+  DATA.forEach(r=>{
+    const rv_=String(r[rv]??''), cv_=String(r[cv]??'');
+    if(!rows.includes(rv_)) rows.push(rv_);
+    if(!cols.includes(cv_)) cols.push(cv_);
+  });
+  rows.sort(); cols.sort();
+
+  const obs={};
+  rows.forEach(r=>cols.forEach(c=>{ obs[r+'\0'+c]=0; }));
+  DATA.forEach(r=>{ const key=String(r[rv]??'')+'\0'+String(r[cv]??''); if(obs[key]!==undefined) obs[key]++; });
+
+  const rowTot={}, colTot={};
+  rows.forEach(r=>{ rowTot[r]=cols.reduce((s,c)=>s+obs[r+'\0'+c],0); });
+  cols.forEach(c=>{ colTot[c]=rows.reduce((s,r)=>s+obs[r+'\0'+c],0); });
+  const N=Object.values(rowTot).reduce((a,b)=>a+b,0);
+
+  let chi2=0;
+  rows.forEach(r=>cols.forEach(c=>{
+    const e=rowTot[r]*colTot[c]/N;
+    if(e>0) chi2+=(obs[r+'\0'+c]-e)**2/e;
+  }));
+
+  const df=(rows.length-1)*(cols.length-1);
+  const p=chiDist(chi2,df);
+  const sig=p<.05;
+
+  // Cramer's V
+  const V=Math.sqrt(chi2/(N*Math.min(rows.length-1,cols.length-1)));
+
+  let html=`<div class="result-box"><div class="result-title">✅ Chi-Square: ${rv} × ${cv}</div>`;
+
+  // Crosstab
+  html+=`<div class="tbl-wrap"><table><thead><tr><th>${rv} \\ ${cv}</th>`;
+  cols.forEach(c=>{ html+=`<th>${c}</th>`; });
+  html+='<th>รวม</th></tr></thead><tbody>';
+  rows.forEach(r=>{
+    html+=`<tr><td><b>${r}</b></td>`;
+    cols.forEach(c=>{ html+=`<td style="text-align:center">${obs[r+'\0'+c]}</td>`; });
+    html+=`<td style="text-align:center;font-weight:700">${rowTot[r]}</td></tr>`;
+  });
+  html+='<tr style="font-weight:700;background:var(--blue-light)"><td>รวม</td>';
+  cols.forEach(c=>{ html+=`<td style="text-align:center">${colTot[c]}</td>`; });
+  html+=`<td style="text-align:center">${N}</td></tr>`;
+  html+='</tbody></table></div>';
+
+  html+=`<div class="stat-grid" style="margin-top:12px">
+    <div class="stat-item"><div class="stat-label">χ²</div><div class="stat-value">${fmt(chi2,3)}</div></div>
+    <div class="stat-item"><div class="stat-label">df</div><div class="stat-value">${df}</div></div>
+    <div class="stat-item"><div class="stat-label">p-value</div>
+      <div class="stat-value ${sig?'green':'red'}">${fmtP(p)}</div></div>
+    <div class="stat-item"><div class="stat-label">Cramer's V</div><div class="stat-value">${fmt(V,3)}</div></div>
+    <div class="stat-item"><div class="stat-label">N</div><div class="stat-value">${N}</div></div>
+  </div>`;
+
+  html+=`<div class="interp${sig?'':' warn'}" style="margin-top:12px">
+    ${sig?'✅':'⚠️'} ${sig?'พบความสัมพันธ์':'ไม่พบความสัมพันธ์'}ระหว่าง${rv}และ${cv}อย่างมีนัยสำคัญทางสถิติ
+    χ²(${df}) = ${fmt(chi2,3)}, p ${p<.001?'< .001':'= '+fmtP(p)}, Cramer's V = ${fmt(V,3)}
+    ${sig?'(ขนาดความสัมพันธ์: '+(V<.1?'เล็กมาก':V<.3?'เล็ก':V<.5?'ปานกลาง':'ใหญ่')+')':''}
+  </div>`;
+  html+=exportBar('chi');
+  html+='</div>';
+  document.getElementById('chi-result').innerHTML=html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXPORT
+═══════════════════════════════════════════════════════ */
+function exportBar(id){
+  return `<div class="export-bar">
+    <button class="btn btn-outline btn-sm" onclick="copyResult('${id}')">📋 คัดลอกผล</button>
+    <button class="btn btn-outline btn-sm" onclick="printResult('${id}')">🖨️ พิมพ์ / บันทึก PDF</button>
+  </div>`;
+}
+
+function copyResult(id){
+  const el = document.getElementById(`${id}-result`);
+  if(!el) return;
+  // extract text
+  const text = el.innerText || el.textContent;
+  navigator.clipboard?.writeText(text).then(()=>toast('📋 คัดลอกแล้ว')).catch(()=>toast('ไม่สามารถคัดลอกได้ในเบราว์เซอร์นี้'));
+}
+
+function printResult(id){
+  const el = document.getElementById(`${id}-result`);
+  if(!el) return;
+  const win = window.open('','_blank','width=800,height=600');
+  win.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <title>StatPad — ผลการวิเคราะห์</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+      body{font-family:'Sarabun',sans-serif;padding:20px 30px;font-size:13px}
+      table{border-collapse:collapse;width:100%;margin:10px 0}
+      th{background:#1a56db;color:#fff;padding:7px 10px;text-align:left}
+      td{padding:6px 10px;border-bottom:1px solid #e5e7eb}
+      tr:nth-child(even) td{background:#f9fafb}
+      h1{font-size:16px;margin-bottom:12px}
+      .note{font-size:11px;color:#9ca3af;margin-top:16px}
+    </style>
+  </head><body>
+    <h1>StatPad — ผลการวิเคราะห์สถิติ</h1>
+    ${el.innerHTML}
+    <p class="note">สร้างโดย StatPad | วันที่: ${new Date().toLocaleDateString('th-TH')}</p>
+  </body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>win.print(), 600);
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+updateTTestUI();
+</script>
+</body>
+</html>

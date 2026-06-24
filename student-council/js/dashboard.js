@@ -241,6 +241,9 @@ async function renderHome() {
         <button class="quick-btn" onclick="document.getElementById('avatarBtn').click()">
           <div class="icon-wrap">👤</div><span>โปรไฟล์</span>
         </button>
+        <button class="quick-btn" onclick="window.open('stats.html','_blank')">
+          <div class="icon-wrap">📊</div><span>สถิติ</span>
+        </button>
       </div>
 
       ${recentParts.length > 0 ? `
