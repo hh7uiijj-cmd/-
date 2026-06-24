@@ -271,8 +271,15 @@ tr:nth-child(even) td{background:var(--gray-50)}
       </div>
       <div class="tbl-wrap" id="preview-table"></div>
       <div class="btn-group" style="margin-top:12px">
+        <button class="btn btn-success btn-sm" onclick="promptSaveDataset()">💾 บันทึกชุดข้อมูลนี้</button>
         <button class="btn btn-danger btn-sm" onclick="clearData()">🗑️ ล้างข้อมูล</button>
       </div>
+    </div>
+
+    <!-- Saved Datasets -->
+    <div class="card" id="saves-card">
+      <div class="card-title"><div class="icon icon-green">💾</div>ชุดข้อมูลที่บันทึกไว้</div>
+      <div id="saves-list"></div>
     </div>
   </div>
 
@@ -1866,6 +1873,65 @@ function calcKM(){
 }
 
 /* ═══════════════════════════════════════════════════════
+   SAVED DATASETS
+═══════════════════════════════════════════════════════ */
+function getSaves(){ try{ return JSON.parse(localStorage.getItem('statpad_saves')||'[]'); }catch(e){ return []; } }
+function putSaves(arr){ try{ localStorage.setItem('statpad_saves',JSON.stringify(arr)); }catch(e){} }
+
+function promptSaveDataset(){
+  if(!DATA.length){ toast('นำเข้าข้อมูลก่อน'); return; }
+  const name = prompt('ตั้งชื่อชุดข้อมูล:', `ชุดข้อมูล ${new Date().toLocaleDateString('th-TH')}`);
+  if(name===null) return;
+  const label = name.trim() || `ชุดข้อมูล ${new Date().toLocaleDateString('th-TH')}`;
+  const saves = getSaves();
+  saves.unshift({ name: label, date: new Date().toLocaleDateString('th-TH'), COLS, DATA, NUM_COLS });
+  putSaves(saves);
+  renderSavedList();
+  toast(`💾 บันทึก "${label}" แล้ว`);
+}
+
+function loadDataset(i){
+  const s = getSaves()[i];
+  if(!s) return;
+  COLS = s.COLS; DATA = s.DATA; NUM_COLS = s.NUM_COLS;
+  showPreview();
+  try{ localStorage.setItem('statpad_data', JSON.stringify({COLS, DATA, NUM_COLS})); }catch(e){}
+  toast(`📂 โหลด "${s.name}" — ${DATA.length} แถว`);
+}
+
+function deleteDataset(i){
+  const saves = getSaves();
+  const name = saves[i]?.name||'';
+  if(!confirm(`ลบ "${name}" ออกจากรายการที่บันทึกไว้?`)) return;
+  saves.splice(i,1);
+  putSaves(saves);
+  renderSavedList();
+  toast(`🗑️ ลบ "${name}" แล้ว`);
+}
+
+function renderSavedList(){
+  const el = document.getElementById('saves-list');
+  if(!el) return;
+  const saves = getSaves();
+  if(!saves.length){
+    el.innerHTML = `<div class="empty-state"><div class="big">📂</div>
+      <p>ยังไม่มีชุดข้อมูลที่บันทึก<br>
+      <small style="color:var(--gray-400)">นำเข้าข้อมูลแล้วกด "💾 บันทึกชุดข้อมูลนี้"</small></p></div>`;
+    return;
+  }
+  el.innerHTML = saves.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--gray-100)">
+      <div style="font-size:1.4rem;flex-shrink:0">📊</div>
+      <div style="flex:1;min-width:0;overflow:hidden">
+        <div style="font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.name}</div>
+        <div style="font-size:.75rem;color:var(--gray-400)">${s.date} · ${s.DATA?.length||0} แถว · ${s.COLS?.length||0} ตัวแปร</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="loadDataset(${i})">📂 โหลด</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteDataset(${i})" style="padding:7px 10px">🗑️</button>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
    SPREADSHEET GRID
 ═══════════════════════════════════════════════════════ */
 let gCols = 4;
@@ -1982,6 +2048,7 @@ try {
     if(DATA.length){ showPreview(); setTimeout(()=>toast(`📂 โหลดข้อมูลที่บันทึกไว้ ${DATA.length} แถว`,3000), 400); }
   }
 } catch(e){}
+renderSavedList();
 </script>
 </body>
 </html>
