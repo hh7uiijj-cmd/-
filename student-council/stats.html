@@ -155,6 +155,26 @@ tr:nth-child(even) td{background:var(--gray-50)}
 .empty-state{text-align:center;padding:36px 20px;color:var(--gray-400)}
 .empty-state .big{font-size:2.5rem;margin-bottom:8px}
 .empty-state p{font-size:.88rem}
+
+/* ─── Spreadsheet Grid ─── */
+.grid-tbl{border-collapse:collapse;font-size:.82rem;width:max-content}
+.grid-tbl th,.grid-tbl td{padding:0;margin:0}
+.grid-tbl th{background:var(--blue);border:1px solid rgba(255,255,255,.25)}
+.grid-tbl td{border:1px solid var(--gray-200)}
+.gcell{
+  display:block;width:110px;padding:6px 8px;border:none;
+  font-family:var(--font);font-size:.82rem;background:transparent;
+  outline:none;color:var(--gray-800);
+}
+.gcell:focus{background:var(--blue-light);box-shadow:inset 0 0 0 2px var(--blue)}
+.ghdr{color:#fff;font-weight:700}
+.ghdr::placeholder{color:rgba(255,255,255,.5);font-weight:400}
+.grow-num{
+  background:var(--gray-50);color:var(--gray-400);font-size:.72rem;
+  font-weight:600;text-align:center;padding:6px 5px;min-width:34px;
+  border-right:2px solid var(--gray-300);user-select:none;
+}
+.ghdr-num{background:var(--blue-dark);color:rgba(255,255,255,.6);font-size:.72rem;text-align:center;padding:6px 5px;min-width:34px}
 </style>
 </head>
 <body>
@@ -200,13 +220,30 @@ tr:nth-child(even) td{background:var(--gray-50)}
 
       <label>วิธีนำเข้า</label>
       <div class="tabs" style="margin-bottom:14px">
-        <button class="tab active" id="import-tab-paste" onclick="switchImport('paste')">📋 วาง (Paste)</button>
+        <button class="tab active" id="import-tab-grid" onclick="switchImport('grid')">✏️ ตารางกรอกข้อมูล</button>
+        <button class="tab" id="import-tab-paste" onclick="switchImport('paste')">📋 วาง (Paste)</button>
         <button class="tab" id="import-tab-csv" onclick="switchImport('csv')">📂 ไฟล์ CSV</button>
-        <button class="tab" id="import-tab-manual" onclick="switchImport('manual')">✏️ กรอกเอง</button>
+      </div>
+
+      <!-- Grid entry — default -->
+      <div id="import-grid">
+        <p class="data-hint" style="margin-bottom:10px">กรอกข้อมูลในตารางด้านล่าง — กด <b>Tab</b> เพื่อเลื่อนช่อง, <b>Enter</b> เพื่อลงแถวถัดไป, แก้ชื่อตัวแปรได้ที่แถวบนสุด (สีน้ำเงิน)</p>
+        <div class="btn-group" style="margin-bottom:10px;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" onclick="addGridCol()">＋ คอลัมน์</button>
+          <button class="btn btn-outline btn-sm" onclick="addGridRow()">＋ แถว</button>
+          <button class="btn btn-danger btn-sm" onclick="removeGridCol()">－ คอลัมน์</button>
+          <button class="btn btn-danger btn-sm" onclick="removeGridRow()">－ แถว</button>
+          <button class="btn btn-outline btn-sm" onclick="loadSampleToGrid()">🎲 ตัวอย่าง</button>
+          <button class="btn btn-danger btn-sm" onclick="clearGrid()">🗑️ ล้าง</button>
+        </div>
+        <div class="tbl-wrap" id="grid-wrap" style="border:1.5px solid var(--gray-200);border-radius:10px;overflow:hidden;margin-bottom:14px">
+          <!-- rendered by JS -->
+        </div>
+        <button class="btn btn-primary" onclick="loadFromGrid()">📥 โหลดข้อมูลจากตาราง</button>
       </div>
 
       <!-- Paste mode -->
-      <div id="import-paste">
+      <div id="import-paste" style="display:none">
         <p class="data-hint">คัดลอกข้อมูลจาก Excel หรือ Google Sheets แล้ววางด้านล่าง (แถวแรกต้องเป็นหัวตาราง)</p>
         <textarea id="paste-input" placeholder="วางข้อมูลตรงนี้ เช่น&#10;เพศ	อายุ	คะแนน&#10;ชาย	20	85&#10;หญิง	22	90"></textarea>
         <div class="btn-group">
@@ -221,25 +258,6 @@ tr:nth-child(even) td{background:var(--gray-50)}
         <input type="file" id="csv-file" accept=".csv,.txt" onchange="importCSV(event)">
         <div class="btn-group" style="margin-top:12px">
           <button class="btn btn-outline" onclick="loadSampleData()">🎲 ลองข้อมูลตัวอย่าง</button>
-        </div>
-      </div>
-
-      <!-- Manual entry -->
-      <div id="import-manual" style="display:none">
-        <div class="row row-2" style="margin-bottom:12px">
-          <div>
-            <label>ชื่อตัวแปร (กด Enter เพื่อเพิ่ม)</label>
-            <input type="text" id="manual-varname" placeholder="เช่น คะแนนสอบ" onkeydown="if(event.key==='Enter')addManualCol()">
-          </div>
-          <div style="display:flex;align-items:flex-end">
-            <button class="btn btn-outline" style="width:100%" onclick="addManualCol()">+ เพิ่มตัวแปร</button>
-          </div>
-        </div>
-        <div class="col-list" id="manual-cols"></div>
-        <div id="manual-entry-area" style="margin-top:14px;display:none">
-          <label>กรอกข้อมูล (แต่ละบรรทัด = 1 คน แต่ละตัวแปรคั่นด้วย Tab หรือ ,)</label>
-          <textarea id="manual-data" placeholder="ตัวอย่าง:&#10;85,90,78&#10;92,88,95"></textarea>
-          <button class="btn btn-primary" style="margin-top:10px" onclick="importManual()">📥 นำเข้า</button>
         </div>
       </div>
     </div>
@@ -563,7 +581,7 @@ function toast(msg, dur=2500){
 }
 
 function switchImport(mode){
-  ['paste','csv','manual'].forEach(m=>{
+  ['grid','paste','csv'].forEach(m=>{
     document.getElementById('import-'+m).style.display = m===mode?'':'none';
     document.getElementById('import-tab-'+m)?.classList.toggle('active',m===mode);
   });
@@ -1846,9 +1864,97 @@ function calcKM(){
 }
 
 /* ═══════════════════════════════════════════════════════
+   SPREADSHEET GRID
+═══════════════════════════════════════════════════════ */
+let gCols = 4;
+let gRows = 20;
+const G_DEF_HDRS = ['ชื่อ/ID','X1','X2','X3'];
+
+function renderGrid(){
+  const wrap = document.getElementById('grid-wrap');
+  if(!wrap) return;
+  let h = '<table class="grid-tbl"><thead><tr>';
+  h += `<th><div class="ghdr-num">#</div></th>`;
+  for(let c=0;c<gCols;c++){
+    h += `<th><input class="gcell ghdr" id="gh-${c}" type="text" placeholder="ตัวแปร ${c+1}" onkeydown="gKey(event,-1,${c})"></th>`;
+  }
+  h += '</tr></thead><tbody>';
+  for(let r=0;r<gRows;r++){
+    h += `<tr><td><div class="grow-num">${r+1}</div></td>`;
+    for(let c=0;c<gCols;c++){
+      h += `<td><input class="gcell" id="gd-${r}-${c}" type="text" onkeydown="gKey(event,${r},${c})"></td>`;
+    }
+    h += '</tr>';
+  }
+  h += '</tbody></table>';
+  wrap.innerHTML = h;
+}
+
+function initGrid(){
+  renderGrid();
+  G_DEF_HDRS.forEach((h,c)=>{ const el=document.getElementById(`gh-${c}`); if(el) el.value=h; });
+}
+
+function gKey(e, r, c){
+  if(e.key==='Tab'){ e.preventDefault(); if(c+1<gCols) gFocus(r,c+1); else if(r<gRows-1) gFocus(r+1,0); }
+  else if(e.key==='Enter'){ e.preventDefault(); if(r===-1) gFocus(0,c); else if(r<gRows-1) gFocus(r+1,c); else { addGridRow(); setTimeout(()=>gFocus(r+1,c),30); } }
+  else if(e.key==='ArrowDown'&&r>=0){ e.preventDefault(); if(r<gRows-1) gFocus(r+1,c); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); if(r>0) gFocus(r-1,c); else gFocus(-1,c); }
+}
+function gFocus(r,c){ document.getElementById(r===-1?`gh-${c}`:`gd-${r}-${c}`)?.focus(); }
+function gHdrs(){ return Array.from({length:gCols},(_,c)=>document.getElementById(`gh-${c}`)?.value.trim()||`ตัวแปร${c+1}`); }
+function gData(){ return Array.from({length:gRows},(_,r)=>Array.from({length:gCols},(_,c)=>document.getElementById(`gd-${r}-${c}`)?.value||'')); }
+function gRestore(hdrs,data){
+  hdrs.forEach((h,c)=>{ const el=document.getElementById(`gh-${c}`); if(el) el.value=h; });
+  data.forEach((row,r)=>row.forEach((v,c)=>{ const el=document.getElementById(`gd-${r}-${c}`); if(el) el.value=v; }));
+}
+
+function addGridCol(){ const h=gHdrs(),d=gData(); gCols++; renderGrid(); gRestore(h,d); toast(`เพิ่มคอลัมน์ที่ ${gCols}`); }
+function addGridRow(){ const h=gHdrs(),d=gData(); gRows++; renderGrid(); gRestore(h,d); }
+function removeGridCol(){
+  if(gCols<=1){ toast('ต้องมีอย่างน้อย 1 คอลัมน์'); return; }
+  const h=gHdrs(),d=gData(); gCols--; renderGrid(); gRestore(h.slice(0,gCols),d.map(r=>r.slice(0,gCols)));
+}
+function removeGridRow(){
+  if(gRows<=1){ toast('ต้องมีอย่างน้อย 1 แถว'); return; }
+  const h=gHdrs(),d=gData(); gRows--; renderGrid(); gRestore(h,d.slice(0,gRows));
+}
+function clearGrid(){
+  for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++){ const el=document.getElementById(`gd-${r}-${c}`); if(el) el.value=''; }
+  toast('🗑️ ล้างข้อมูลในตารางแล้ว');
+}
+function loadFromGrid(){
+  const headers=gHdrs(), data=gData();
+  const validRows=data.filter(r=>r.some(v=>v.trim()!==''));
+  if(!validRows.length){ toast('⚠️ ยังไม่มีข้อมูลในตาราง'); return; }
+  const rows=validRows.map(r=>{ const o={}; headers.forEach((h,i)=>{ o[h]=r[i]||''; }); return o; });
+  loadData(headers, rows);
+}
+function loadSampleToGrid(){
+  const hdrs=['ชื่อ','เพศ','คณะ','ชั้นปี','GPA','คะแนนA','คะแนนB','ความพึงพอใจ'];
+  const rows=[
+    ['นักศึกษา1','ชาย','วิศวกรรม','1','3.20','78','82','4'],
+    ['นักศึกษา2','หญิง','วิทยาศาสตร์','2','3.65','85','88','5'],
+    ['นักศึกษา3','ชาย','วิศวกรรม','1','2.95','72','70','3'],
+    ['นักศึกษา4','หญิง','ศิลปศาสตร์','3','3.80','90','92','5'],
+    ['นักศึกษา5','ชาย','วิทยาศาสตร์','2','3.10','80','75','4'],
+    ['นักศึกษา6','หญิง','วิศวกรรม','2','3.45','83','86','4'],
+    ['นักศึกษา7','ชาย','ศิลปศาสตร์','3','3.00','70','68','3'],
+    ['นักศึกษา8','หญิง','วิทยาศาสตร์','1','3.70','88','91','5'],
+    ['นักศึกษา9','ชาย','วิศวกรรม','3','2.80','65','60','2'],
+    ['นักศึกษา10','หญิง','ศิลปศาสตร์','2','3.55','87','89','5'],
+  ];
+  gCols=Math.max(gCols,hdrs.length); gRows=Math.max(gRows,rows.length); renderGrid();
+  hdrs.forEach((h,c)=>{ const el=document.getElementById(`gh-${c}`); if(el) el.value=h; });
+  rows.forEach((row,r)=>row.forEach((v,c)=>{ const el=document.getElementById(`gd-${r}-${c}`); if(el) el.value=v; }));
+  toast('🎲 โหลดตัวอย่างแล้ว — กด "📥 โหลดข้อมูลจากตาราง" เพื่อนำเข้า');
+}
+
+/* ═══════════════════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════════════════ */
 updateTTestUI();
+initGrid();
 </script>
 </body>
 </html>
