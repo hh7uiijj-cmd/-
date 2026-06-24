@@ -617,6 +617,7 @@ function loadData(headers, rows){
   });
   showPreview();
   toast(`✅ โหลดข้อมูลสำเร็จ ${rows.length} แถว ${headers.length} ตัวแปร`);
+  try { localStorage.setItem('statpad_data', JSON.stringify({COLS, DATA, NUM_COLS})); } catch(e){}
 }
 
 function importPaste(){
@@ -693,6 +694,7 @@ function loadSampleData(){
 function clearData(){
   DATA = []; COLS = []; NUM_COLS = [];
   document.getElementById('preview-card').style.display = 'none';
+  localStorage.removeItem('statpad_data');
   toast('🗑️ ล้างข้อมูลแล้ว');
 }
 
@@ -1876,13 +1878,13 @@ function renderGrid(){
   let h = '<table class="grid-tbl"><thead><tr>';
   h += `<th><div class="ghdr-num">#</div></th>`;
   for(let c=0;c<gCols;c++){
-    h += `<th><input class="gcell ghdr" id="gh-${c}" type="text" placeholder="ตัวแปร ${c+1}" onkeydown="gKey(event,-1,${c})"></th>`;
+    h += `<th><input class="gcell ghdr" id="gh-${c}" type="text" placeholder="ตัวแปร ${c+1}" onkeydown="gKey(event,-1,${c})" oninput="saveGrid()"></th>`;
   }
   h += '</tr></thead><tbody>';
   for(let r=0;r<gRows;r++){
     h += `<tr><td><div class="grow-num">${r+1}</div></td>`;
     for(let c=0;c<gCols;c++){
-      h += `<td><input class="gcell" id="gd-${r}-${c}" type="text" onkeydown="gKey(event,${r},${c})"></td>`;
+      h += `<td><input class="gcell" id="gd-${r}-${c}" type="text" onkeydown="gKey(event,${r},${c})" oninput="saveGrid()"></td>`;
     }
     h += '</tr>';
   }
@@ -1891,8 +1893,24 @@ function renderGrid(){
 }
 
 function initGrid(){
+  try {
+    const saved = localStorage.getItem('statpad_grid');
+    if(saved){
+      const s = JSON.parse(saved);
+      gCols = s.gCols || gCols; gRows = s.gRows || gRows;
+      renderGrid();
+      gRestore(s.hdrs || [], s.data || []);
+      return;
+    }
+  } catch(e){}
   renderGrid();
   G_DEF_HDRS.forEach((h,c)=>{ const el=document.getElementById(`gh-${c}`); if(el) el.value=h; });
+}
+
+function saveGrid(){
+  try {
+    localStorage.setItem('statpad_grid', JSON.stringify({gCols, gRows, hdrs:gHdrs(), data:gData()}));
+  } catch(e){}
 }
 
 function gKey(e, r, c){
@@ -1921,6 +1939,7 @@ function removeGridRow(){
 }
 function clearGrid(){
   for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++){ const el=document.getElementById(`gd-${r}-${c}`); if(el) el.value=''; }
+  localStorage.removeItem('statpad_grid');
   toast('🗑️ ล้างข้อมูลในตารางแล้ว');
 }
 function loadFromGrid(){
@@ -1955,6 +1974,14 @@ function loadSampleToGrid(){
 ═══════════════════════════════════════════════════════ */
 updateTTestUI();
 initGrid();
+try {
+  const sd = localStorage.getItem('statpad_data');
+  if(sd){
+    const s = JSON.parse(sd);
+    COLS = s.COLS||[]; DATA = s.DATA||[]; NUM_COLS = s.NUM_COLS||[];
+    if(DATA.length){ showPreview(); setTimeout(()=>toast(`📂 โหลดข้อมูลที่บันทึกไว้ ${DATA.length} แถว`,3000), 400); }
+  }
+} catch(e){}
 </script>
 </body>
 </html>
