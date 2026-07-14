@@ -538,9 +538,11 @@ tr:nth-child(even) td{background:var(--gray-50)}
       <select id="desc-vars" multiple size="5" style="font-size:.85rem"></select>
       <p class="alpha-note">กด Ctrl/⌘ + แตะ เพื่อเลือกหลายตัวแปรบน iPad</p>
       <div class="btn-group">
-        <button class="btn btn-primary" onclick="runDesc()">▶ คำนวณ</button>
+        <button class="btn btn-primary" onclick="runDesc()">▶ คำนวณ (ทั้งหมด)</button>
         <button class="btn btn-outline btn-sm" onclick="selectAllDesc()">เลือกทั้งหมด</button>
+        <button class="btn btn-outline btn-sm" onclick="runDescGrouped()" style="background:var(--orange-light);color:var(--orange);border-color:var(--orange)">📋 แยกตามกลุ่ม</button>
       </div>
+      <p class="alpha-note">📋 แยกตามกลุ่ม = แสดง Mean/SD แยกตามกลุ่มอายุ/เพศ ทุก combination อัตโนมัติ</p>
       <div id="desc-result"></div>
     </div>
   </div>
@@ -744,6 +746,16 @@ tr:nth-child(even) td{background:var(--gray-50)}
         <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="runZmanual()">▶ แปลงคะแนน</button>
       </div>
 
+      <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <b>โหมด 3 — เปรียบเทียบ Z-score สองตัวแปร (เช่น วันแรก vs วันหลัง)</b>
+        <p class="alpha-note" style="margin-bottom:10px">คำนวณ Z จากค่าเฉลี่ยและ SD ของแต่ละตัวแปรนั้นๆ แล้วแสดงตารางเปรียบเทียบ</p>
+        <div class="row row-2" style="margin-top:10px">
+          <div><label>ตัวแปร X (เช่น วันแรก)</label><select id="zs-col-a"></select></div>
+          <div><label>ตัวแปร Y (เช่น วันหลัง)</label><select id="zs-col-b"></select></div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="runZcompare()">▶ ตารางเปรียบเทียบ</button>
+      </div>
+
       <div id="zscore-result"></div>
     </div>
   </div>
@@ -911,6 +923,7 @@ let NUM_COLS = [];      // numeric column names
 let CURRENT_SECTION = 'data';
 let LAST_ANALYZE_PANEL = 'desc';
 let OUTPUT_ITEMS = [];
+let REG_SIMPLE = null; // {a, b, dep, ind} for last simple regression
 const ANALYZE_PANELS = ['desc','freq','ttest','anova','corr','chi','alpha','reg','nonpar','zscore','samplesize','calc'];
 
 /* ═══════════════════════════════════════════════════════
@@ -1340,6 +1353,10 @@ function refreshSelects(){
   fillSelect('reg-dep', NUM_COLS);
   fillSelect('reg-ind', NUM_COLS, true);
   fillSelect('zs-col', NUM_COLS);
+  fillSelect('zs-col-a', NUM_COLS);
+  fillSelect('zs-col-b', NUM_COLS);
+  // Default zs-col-b to second numeric col if available
+  if(NUM_COLS.length >= 2){ const el=document.getElementById('zs-col-b'); if(el) el.value=NUM_COLS[1]; }
   updateTTestUI();
   updateNonparUI();
 }
@@ -1820,6 +1837,30 @@ function runCorr(){
     }
   }
   html+='</tbody></table></div>';
+  // Show-work for simple 2-variable Pearson correlation
+  if(vars.length===2 && method==='pearson'){
+    const {x,y,n}=getPair(vars[0],vars[1]);
+    const mx=mean(x), my=mean(y);
+    const ssxy=x.reduce((s,xi,i)=>s+(xi-mx)*(y[i]-my),0);
+    const ssx=x.reduce((s,xi)=>s+(xi-mx)**2,0);
+    const ssy=y.reduce((s,yi)=>s+(yi-my)**2,0);
+    const r=pearson(x,y);
+    html+=`<div style="background:var(--blue-light);border-radius:10px;padding:14px 16px;margin-top:14px">
+      <b>📐 แสดงวิธีคิด (Show Work)</b>
+      <div class="tbl-wrap" style="margin-top:10px"><table><thead><tr>
+        <th>ค่า</th><th>สูตร</th><th>ผลลัพธ์</th></tr></thead><tbody>
+        <tr><td>Mean ${vars[0]}</td><td>Σx/n</td><td>${fmt(mx,4)}</td></tr>
+        <tr><td>Mean ${vars[1]}</td><td>Σy/n</td><td>${fmt(my,4)}</td></tr>
+        <tr><td>Σ(x−x̄)²</td><td>SS_x</td><td>${fmt(ssx,4)}</td></tr>
+        <tr><td>Σ(y−ȳ)²</td><td>SS_y</td><td>${fmt(ssy,4)}</td></tr>
+        <tr><td>Σ(x−x̄)(y−ȳ)</td><td>SP_xy</td><td>${fmt(ssxy,4)}</td></tr>
+        <tr><td>√(SS_x × SS_y)</td><td>ตัวหาร</td><td>${fmt(Math.sqrt(ssx*ssy),4)}</td></tr>
+        <tr style="background:var(--blue);color:#fff"><td><b>r</b></td><td>SP_xy / √(SS_x·SS_y)</td><td><b>${fmt(r,4)}</b></td></tr>
+      </tbody></table></div>
+      <p class="alpha-note" style="margin-top:8px">r = ${fmt(ssxy,2)} / √(${fmt(ssx,2)} × ${fmt(ssy,2)}) = ${fmt(ssxy,2)} / ${fmt(Math.sqrt(ssx*ssy),2)} = ${fmt(r,4)}</p>
+    </div>`;
+  }
+
   html+=exportBar('corr');
   html+='</div>';
   document.getElementById('corr-result').innerHTML=html;
@@ -2105,6 +2146,29 @@ function runReg(){
       ${sig?'✅':'⚠️'} โมเดล${sig?'มี':'ไม่มี'}นัยสำคัญ F(${p},${n-p-1}) = ${fmt(F,3)}, p ${pF<.001?'< .001':'= '+fmtP(pF)}<br>
       ตัวแปร X อธิบายความแปรปรวนของ Y ได้ ${fmt(R2*100,1)}% (R² = ${fmt(R2,3)})
     </div>`;
+
+  // Prediction box for simple regression (1 X only)
+  if(p===1){
+    const a=beta[0], b1=beta[1];
+    REG_SIMPLE = {a, b:b1, dep, ind:inds[0]};
+    const sign = a>=0?'+':'';
+    html += `<div style="background:var(--blue-light);border-radius:10px;padding:14px 16px;margin-top:14px">
+      <b>🔮 ทำนายค่า (Prediction)</b>
+      <p class="alpha-note" style="margin-bottom:12px">สมการ: ${dep}' = ${fmt(b1,4)} × ${inds[0]} ${sign} ${fmt(a,4)}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:10px">
+        <div class="form-field-wrap" style="min-width:80px;max-width:120px"><label>แทน ${inds[0]} (X) =</label>
+          <input type="number" id="reg-pred-x" step="any" placeholder="เช่น 40"></div>
+        <button class="btn btn-primary btn-sm" onclick="calcRegFromX()">→ ${dep}' = ?</button>
+        <div id="reg-pred-x-result" style="padding:6px 14px;background:#fff;border-radius:8px;font-weight:700;min-width:80px"></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+        <div class="form-field-wrap" style="min-width:80px;max-width:120px"><label>แทน ${dep} (Y) =</label>
+          <input type="number" id="reg-pred-y" step="any" placeholder="เช่น 30"></div>
+        <button class="btn btn-primary btn-sm" onclick="calcRegFromY()">→ ${inds[0]}' = ?</button>
+        <div id="reg-pred-y-result" style="padding:6px 14px;background:#fff;border-radius:8px;font-weight:700;min-width:80px"></div>
+      </div>
+    </div>`;
+  }
 
   html += exportBar('reg');
   html += '</div>';
@@ -3116,6 +3180,139 @@ function loadSampleToGrid(){
   hdrs.forEach((h,c)=>{ const el=document.getElementById(`gh-${c}`); if(el) el.value=h; });
   rows.forEach((row,r)=>row.forEach((v,c)=>{ const el=document.getElementById(`gd-${r}-${c}`); if(el) el.value=v; }));
   toast('🎲 โหลดตัวอย่างแล้ว — กด "📥 โหลดข้อมูลจากตาราง" เพื่อนำเข้า');
+}
+
+/* ═══════════════════════════════════════════════════════
+   GROUPED DESCRIPTIVE STATS
+═══════════════════════════════════════════════════════ */
+function runDescGrouped(){
+  if(!DATA.length){ toast('นำเข้าข้อมูลก่อน'); return; }
+  const vars = getSelected('desc-vars');
+  if(!vars.length){ toast('เลือกตัวแปรตัวเลขอย่างน้อย 1 ตัว'); return; }
+  const catCols = _getFilterCatCols();
+  if(!catCols.length){ toast('ไม่มีตัวแปรหมวดหมู่ — ใช้ ▶ คำนวณ แทน'); return; }
+
+  // Gather all unique values per cat col
+  const catVals = catCols.map(c=>[...new Set(DATA.map(r=>String(r[c]??'')))].sort());
+
+  // Build all combinations: [] means "all" (grand total row)
+  function combos(cols, vals){
+    if(!cols.length) return [[]];
+    const rest = combos(cols.slice(1), vals.slice(1));
+    const result = [];
+    // "all" option for this col
+    rest.forEach(r=>result.push([null,...r]));
+    vals[0].forEach(v=>rest.forEach(r=>result.push([v,...r])));
+    return result;
+  }
+  const allCombos = combos(catCols, catVals);
+
+  let html = `<div class="result-box"><div class="result-title">📋 สถิติแยกตามกลุ่ม</div>`;
+
+  vars.forEach(v=>{
+    html += `<div style="margin-bottom:18px">
+      <div style="font-weight:700;color:var(--blue-dark);margin-bottom:8px;font-size:.9rem">📊 ${v}</div>
+      <div class="tbl-wrap"><table><thead><tr>`;
+    catCols.forEach(c=>{ html+=`<th>${c}</th>`; });
+    html += `<th>N</th><th>Mean</th><th>SD</th><th>Min</th><th>Max</th></tr></thead><tbody>`;
+
+    allCombos.forEach(combo=>{
+      // Filter rows to match this combo (null = include all for that col)
+      const subset = DATA.filter(r=>
+        combo.every((val,i)=> val===null || String(r[catCols[i]]??'')=== val)
+      );
+      const arr = subset.map(r=>parseFloat(r[v])).filter(x=>!isNaN(x));
+      if(!arr.length) return;
+      const m=mean(arr), s=sd(arr), mn=Math.min(...arr), mx=Math.max(...arr);
+      const isTotal = combo.every(v=>v===null);
+      const style = isTotal ? 'font-weight:700;background:var(--blue-light)' : '';
+      html+=`<tr style="${style}">`;
+      combo.forEach((val,i)=>{
+        const isAllInThisCol = val===null;
+        const onlyThisIsSpecified = !isAllInThisCol && combo.every((v2,j)=>j===i||v2===null);
+        const label = isAllInThisCol ? (isTotal?'<b>ทั้งหมด</b>':'<span style="color:var(--gray-400)">ทุกกลุ่ม</span>') : val;
+        const bg = isAllInThisCol&&!isTotal ? 'background:var(--orange-light);' : '';
+        html+=`<td style="${bg}">${label}</td>`;
+      });
+      html+=`<td>${arr.length}</td><td><b>${fmt(m,2)}</b></td><td>${fmt(s,2)}</td><td>${fmt(mn,1)}</td><td>${fmt(mx,1)}</td></tr>`;
+    });
+    html+='</tbody></table></div></div>';
+  });
+
+  html += exportBar('desc');
+  html += '</div>';
+  document.getElementById('desc-result').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Z-SCORE COMPARE TWO COLUMNS
+═══════════════════════════════════════════════════════ */
+function runZcompare(){
+  if(!DATA.length){ toast('นำเข้าข้อมูลก่อน'); return; }
+  const ca = document.getElementById('zs-col-a').value;
+  const cb = document.getElementById('zs-col-b').value;
+  if(!ca||!cb){ toast('เลือกตัวแปรทั้งสอง'); return; }
+  if(ca===cb){ toast('เลือกตัวแปรต่างกัน'); return; }
+
+  const pairsRaw = FD().map(r=>({
+    a: parseFloat(r[ca]), b: parseFloat(r[cb])
+  })).filter(r=>!isNaN(r.a)&&!isNaN(r.b));
+
+  const arrA = pairsRaw.map(r=>r.a), arrB = pairsRaw.map(r=>r.b);
+  const mA=mean(arrA), sA=sd(arrA), mB=mean(arrB), sB=sd(arrB);
+  const n = arrA.length;
+
+  let html = `<div class="result-box" style="margin-top:14px">
+    <div class="result-title">📐 เปรียบเทียบ Z-score: ${ca} vs ${cb}</div>
+    <div class="stat-grid" style="margin-bottom:12px">
+      <div class="stat-item"><div class="stat-label">Mean (${ca})</div><div class="stat-value">${fmt(mA,2)}</div></div>
+      <div class="stat-item"><div class="stat-label">SD (${ca})</div><div class="stat-value">${fmt(sA,2)}</div></div>
+      <div class="stat-item"><div class="stat-label">Mean (${cb})</div><div class="stat-value">${fmt(mB,2)}</div></div>
+      <div class="stat-item"><div class="stat-label">SD (${cb})</div><div class="stat-value">${fmt(sB,2)}</div></div>
+    </div>
+    <div class="interp info">Z = (X − X̄) / SD &nbsp;แยกคำนวณตามตัวแปรของตัวเอง</div>
+    <div class="tbl-wrap" style="margin-top:10px"><table><thead><tr>
+      <th>#</th>
+      <th>${ca}</th><th>Z (${ca})</th>
+      <th>${cb}</th><th>Z (${cb})</th>
+      <th>Z ต่างกัน</th></tr></thead><tbody>`;
+
+  arrA.forEach((a,i)=>{
+    const b=arrB[i];
+    const zA=(a-mA)/sA, zB=(b-mB)/sB;
+    const diff=zA-zB;
+    html+=`<tr><td>${i+1}</td>
+      <td>${fmt(a,2)}</td><td>${zA>=0?'+':''}${fmt(zA,3)}</td>
+      <td>${fmt(b,2)}</td><td>${zB>=0?'+':''}${fmt(zB,3)}</td>
+      <td style="color:${Math.abs(diff)>.5?'var(--orange)':'inherit'}">${diff>=0?'+':''}${fmt(diff,3)}</td></tr>`;
+  });
+  html+='</tbody></table></div>';
+  html+=exportBar('zscore');
+  html+='</div>';
+  document.getElementById('zscore-result').innerHTML=html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   REGRESSION PREDICTION HELPERS
+═══════════════════════════════════════════════════════ */
+function calcRegFromX(){
+  if(!REG_SIMPLE){ toast('รันการถดถอยก่อน'); return; }
+  const x=parseFloat(document.getElementById('reg-pred-x').value);
+  if(isNaN(x)){ toast('กรอกค่า X ก่อน'); return; }
+  const {a,b,dep,ind}=REG_SIMPLE;
+  const yHat=b*x+a;
+  document.getElementById('reg-pred-x-result').innerHTML=
+    `${dep}' = ${fmt(b,3)}×${x} ${a>=0?'+':''}${fmt(a,3)} = <b>${fmt(yHat,2)}</b>`;
+}
+function calcRegFromY(){
+  if(!REG_SIMPLE){ toast('รันการถดถอยก่อน'); return; }
+  const y=parseFloat(document.getElementById('reg-pred-y').value);
+  if(isNaN(y)){ toast('กรอกค่า Y ก่อน'); return; }
+  const {a,b,dep,ind}=REG_SIMPLE;
+  // X from Y: Y = bX + a → X = (Y-a)/b
+  const xHat=(y-a)/b;
+  document.getElementById('reg-pred-y-result').innerHTML=
+    `${ind}' = (${y} ${a<=0?'+':'−'} ${fmt(Math.abs(a),3)}) / ${fmt(b,3)} = <b>${fmt(xHat,2)}</b>`;
 }
 
 /* ═══════════════════════════════════════════════════════
