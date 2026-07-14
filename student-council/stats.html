@@ -255,6 +255,14 @@ tr:nth-child(even) td{background:var(--gray-50)}
           <!-- rendered by JS -->
         </div>
         <button class="btn btn-primary" onclick="loadFromGrid()">📥 โหลดข้อมูลจากตาราง</button>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-200)">
+          <p class="data-hint" style="margin-bottom:8px">ดาวน์โหลดตารางที่กรอก:</p>
+          <div class="btn-group" style="gap:8px">
+            <button class="btn btn-outline btn-sm" onclick="exportGridCSV()">📄 CSV</button>
+            <button class="btn btn-outline btn-sm" onclick="exportGridXLSX()">📊 Excel (.xlsx)</button>
+            <button class="btn btn-outline btn-sm" onclick="exportGridPNG()">📸 PNG (รูปภาพ)</button>
+          </div>
+        </div>
       </div>
 
       <!-- Paste mode -->
@@ -1949,6 +1957,119 @@ function calcKM(){
         ✅ ประชากร ${N.toLocaleString()} คน → ใช้กลุ่มตัวอย่าง <b>${best[1]} คน</b> (Krejcie & Morgan, α=.05)
       </div>
     </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXPORT: CSV / XLSX / PNG
+═══════════════════════════════════════════════════════ */
+function dlBlob(blob, filename){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+function loadScript(src, cb){
+  if(document.querySelector(`script[src="${src}"]`)){ cb(); return; }
+  const s=document.createElement('script');
+  s.src=src; s.onload=cb; document.head.appendChild(s);
+}
+
+function exportGridCSV(){
+  const hdrs=gHdrs(), rows=gData().filter(r=>r.some(v=>v.trim()!==''));
+  if(!rows.length){ toast('⚠️ ไม่มีข้อมูลในตาราง'); return; }
+  const esc=v=>`"${String(v).replace(/"/g,'""')}"`;
+  const csv=[hdrs.map(esc).join(','),...rows.map(r=>r.map(esc).join(','))].join('\r\n');
+  dlBlob(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}),'ข้อมูล.csv');
+  toast('📄 บันทึก CSV แล้ว');
+}
+
+function exportGridXLSX(){
+  const hdrs=gHdrs(), rows=gData().filter(r=>r.some(v=>v.trim()!==''));
+  if(!rows.length){ toast('⚠️ ไม่มีข้อมูลในตาราง'); return; }
+  toast('⏳ กำลังสร้างไฟล์ Excel...');
+  loadScript('https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js', ()=>{
+    const ws=XLSX.utils.aoa_to_sheet([hdrs,...rows]);
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'ข้อมูล');
+    XLSX.writeFile(wb,'ข้อมูล.xlsx');
+    toast('📊 บันทึก Excel แล้ว');
+  });
+}
+
+function exportGridPNG(){
+  const hdrs=gHdrs(), rows=gData().filter(r=>r.some(v=>v.trim()!==''));
+  if(!rows.length){ toast('⚠️ ไม่มีข้อมูลในตาราง'); return; }
+  toast('⏳ กำลังสร้างรูป...');
+  document.fonts.ready.then(()=>_drawPNG(hdrs,rows));
+}
+
+function _drawPNG(hdrs,rows){
+  const DPR=2;
+  const CF='13px Sarabun,Thonburi,sans-serif';
+  const BF='bold 13px Sarabun,Thonburi,sans-serif';
+  const CELL_H=32, HDR_H=38, PAD=20, RNW=38;
+
+  // measure column widths
+  const tmp=document.createElement('canvas').getContext('2d');
+  const colW=hdrs.map((h,i)=>{
+    tmp.font=BF; const hw=tmp.measureText(h).width+24;
+    tmp.font=CF; const dw=Math.max(40,...rows.map(r=>tmp.measureText(r[i]||'').width))+24;
+    return Math.max(80, Math.ceil(Math.max(hw,dw)));
+  });
+
+  const TW=RNW+colW.reduce((a,b)=>a+b,0);
+  const TH=HDR_H+rows.length*CELL_H;
+  const W=TW+PAD*2, H=TH+PAD*2;
+
+  const cv=document.createElement('canvas');
+  cv.width=W*DPR; cv.height=H*DPR;
+  const c=cv.getContext('2d');
+  c.scale(DPR,DPR);
+
+  // background
+  c.fillStyle='#f3f4f6'; c.fillRect(0,0,W,H);
+  c.fillStyle='#fff'; c.fillRect(PAD,PAD,TW,TH);
+
+  // header bar
+  c.fillStyle='#1a56db'; c.fillRect(PAD,PAD,TW,HDR_H);
+  c.fillStyle='#1240a8'; c.fillRect(PAD,PAD,RNW,HDR_H);
+
+  // header text
+  c.fillStyle='#fff'; c.font=BF; c.textBaseline='middle';
+  let cx=PAD+RNW;
+  hdrs.forEach((h,i)=>{ c.fillText(h,cx+8,PAD+HDR_H/2,colW[i]-16); cx+=colW[i]; });
+
+  // data rows
+  rows.forEach((row,r)=>{
+    const y=PAD+HDR_H+r*CELL_H;
+    c.fillStyle=r%2===0?'#fff':'#f9fafb'; c.fillRect(PAD,y,TW,CELL_H);
+    c.strokeStyle='#e5e7eb'; c.lineWidth=0.5;
+    c.beginPath(); c.moveTo(PAD,y+CELL_H); c.lineTo(PAD+TW,y+CELL_H); c.stroke();
+
+    // row number
+    c.font='11px Sarabun,Thonburi,sans-serif'; c.fillStyle='#9ca3af';
+    c.textAlign='center'; c.fillText(r+1,PAD+RNW/2,y+CELL_H/2);
+    c.textAlign='left';
+
+    // cells
+    c.font=CF; c.fillStyle='#1f2937';
+    let dx=PAD+RNW;
+    row.forEach((v,i)=>{
+      c.fillText(v||'',dx+8,y+CELL_H/2,colW[i]-16);
+      c.strokeStyle='#e5e7eb'; c.lineWidth=0.5;
+      c.beginPath(); c.moveTo(dx,y); c.lineTo(dx,y+CELL_H); c.stroke();
+      dx+=colW[i];
+    });
+  });
+
+  // outer border
+  c.strokeStyle='#d1d5db'; c.lineWidth=1;
+  c.strokeRect(PAD+0.5,PAD+0.5,TW-1,TH-1);
+
+  cv.toBlob(blob=>{ dlBlob(blob,'ข้อมูล.png'); toast('📸 บันทึก PNG แล้ว'); });
 }
 
 /* ═══════════════════════════════════════════════════════
