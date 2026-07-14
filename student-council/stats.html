@@ -286,7 +286,17 @@ tr:nth-child(even) td{background:var(--gray-50)}
       <button class="tab" onclick="showPanel('samplesize')">🎯 กลุ่มตัวอย่าง</button>
       <button class="tab" onclick="showPanel('calc')">🔢 คิดเลข</button>
     </div>
-    <!-- analysis panels rendered below, scoped within this shell -->
+    <!-- Compact filter bar for analyze section -->
+    <div id="analyze-filter-bar" style="display:none;padding:0 12px 12px">
+      <div style="background:#fff;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);padding:10px 14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:.8rem;font-weight:700;color:var(--gray-600)">🔍 กรองข้อมูล</span>
+          <span id="analyze-filter-badge" class="badge" style="background:var(--blue-light);color:var(--blue-dark);font-size:.72rem"></span>
+          <button class="btn btn-outline btn-sm" style="margin-left:auto;padding:4px 10px;font-size:.75rem" onclick="clearFilters()">ล้างตัวกรอง</button>
+        </div>
+        <div id="analyze-filter-controls"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════════════════
@@ -914,7 +924,7 @@ function showSection(section){
     document.querySelectorAll('#analyze-tabs .tab').forEach(t=>t.classList.remove('active'));
     const idx = ANALYZE_PANELS.indexOf(LAST_ANALYZE_PANEL);
     document.querySelectorAll('#analyze-tabs .tab')[idx]?.classList.add('active');
-    if(DATA.length){ refreshSelects(); }
+    if(DATA.length){ refreshSelects(); renderAnalyzeFilterBar(); }
     else { toast('💡 นำเข้าข้อมูลในแท็บ ข้อมูล ก่อนวิเคราะห์', 3000); }
   } else {
     document.getElementById('panel-output').classList.add('active');
@@ -2802,47 +2812,56 @@ function FD(){
   }));
 }
 
-function renderFilterUI(){
-  const card = document.getElementById('filter-card');
-  if(!DATA.length){ card.style.display='none'; return; }
-
-  // Detect categorical columns (non-numeric, few unique values)
-  const catCols = COLS.filter(c=>{
+function _getFilterCatCols(){
+  return COLS.filter(c=>{
     if(NUM_COLS.includes(c)) return false;
-    const uniq = [...new Set(DATA.map(r=>String(r[c]??'')))];
-    return uniq.length >= 2 && uniq.length <= 20;
+    const uniq=[...new Set(DATA.map(r=>String(r[c]??'')))];
+    return uniq.length>=2 && uniq.length<=20;
   });
+}
 
-  if(!catCols.length){ card.style.display='none'; return; }
-  card.style.display='';
-
-  // Init filters for new columns
+function _buildFilterChipsHTML(catCols){
   catCols.forEach(col=>{
-    if(!FILTERS[col]){
-      FILTERS[col] = new Set(DATA.map(r=>String(r[col]??'')));
-    }
+    if(!FILTERS[col]) FILTERS[col]=new Set(DATA.map(r=>String(r[col]??'')));
   });
-  // Remove filters for columns no longer in dataset
   Object.keys(FILTERS).forEach(k=>{ if(!COLS.includes(k)) delete FILTERS[k]; });
-
-  const ctrl = document.getElementById('filter-controls');
-  ctrl.innerHTML = catCols.map(col=>{
-    const uniq = [...new Set(DATA.map(r=>String(r[col]??'')))].sort();
-    const chips = uniq.map(v=>{
-      const on = FILTERS[col]?.has(v) ? 'on' : '';
+  return catCols.map(col=>{
+    const uniq=[...new Set(DATA.map(r=>String(r[col]??'')))].sort();
+    const chips=uniq.map(v=>{
+      const on=FILTERS[col]?.has(v)?'on':'';
       return `<button class="fchip ${on}" onclick="toggleFilter('${col}','${v}')">${v}</button>`;
     }).join('');
-    return `<div class="filter-row">
-      <span class="filter-label">${col}</span>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">${chips}</div>
-    </div>`;
+    return `<div class="filter-row"><span class="filter-label">${col}</span><div style="display:flex;flex-wrap:wrap;gap:6px">${chips}</div></div>`;
   }).join('');
+}
 
+function renderFilterUI(){
+  const card=document.getElementById('filter-card');
+  if(!DATA.length){ card.style.display='none'; renderAnalyzeFilterBar(); return; }
+  const catCols=_getFilterCatCols();
+  if(!catCols.length){ card.style.display='none'; renderAnalyzeFilterBar(); return; }
+  card.style.display='';
+  document.getElementById('filter-controls').innerHTML=_buildFilterChipsHTML(catCols);
   updateFilterBadge();
+  renderAnalyzeFilterBar();
+}
+
+function renderAnalyzeFilterBar(){
+  const bar=document.getElementById('analyze-filter-bar');
+  const ctrl=document.getElementById('analyze-filter-controls');
+  if(!bar||!ctrl) return;
+  if(!DATA.length){ bar.style.display='none'; return; }
+  const catCols=_getFilterCatCols();
+  if(!catCols.length){ bar.style.display='none'; return; }
+  bar.style.display='';
+  ctrl.innerHTML=_buildFilterChipsHTML(catCols);
+  const n=FD().length;
+  const badge=document.getElementById('analyze-filter-badge');
+  if(badge) badge.textContent=`${n} / ${DATA.length} แถว`;
 }
 
 function toggleFilter(col, val){
-  if(!FILTERS[col]) FILTERS[col] = new Set(DATA.map(r=>String(r[col]??'')));
+  if(!FILTERS[col]) FILTERS[col]=new Set(DATA.map(r=>String(r[col]??'')));
   if(FILTERS[col].has(val)) FILTERS[col].delete(val);
   else FILTERS[col].add(val);
   renderFilterUI();
@@ -2851,16 +2870,18 @@ function toggleFilter(col, val){
 function clearFilters(){
   COLS.forEach(col=>{
     if(!NUM_COLS.includes(col))
-      FILTERS[col] = new Set(DATA.map(r=>String(r[col]??'')));
+      FILTERS[col]=new Set(DATA.map(r=>String(r[col]??'')));
   });
   renderFilterUI();
   toast('✅ ล้างตัวกรองแล้ว — แสดงข้อมูลทั้งหมด');
 }
 
 function updateFilterBadge(){
-  const n = FD().length;
-  const badge = document.getElementById('filter-badge');
-  if(badge) badge.textContent = `${n} / ${DATA.length} แถว`;
+  const n=FD().length;
+  const b1=document.getElementById('filter-badge');
+  if(b1) b1.textContent=`${n} / ${DATA.length} แถว`;
+  const b2=document.getElementById('analyze-filter-badge');
+  if(b2) b2.textContent=`${n} / ${DATA.length} แถว`;
 }
 
 /* ═══════════════════════════════════════════════════════
