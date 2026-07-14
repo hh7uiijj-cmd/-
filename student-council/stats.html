@@ -249,6 +249,7 @@ tr:nth-child(even) td{background:var(--gray-50)}
           <button class="btn btn-danger btn-sm" onclick="removeGridCol()">－ คอลัมน์</button>
           <button class="btn btn-danger btn-sm" onclick="removeGridRow()">－ แถว</button>
           <button class="btn btn-outline btn-sm" onclick="loadSampleToGrid()">🎲 ตัวอย่าง</button>
+          <button class="btn btn-outline btn-sm" onclick="loadItemTemplate()" style="background:var(--orange-light);color:var(--orange);border-color:var(--orange)">🧪 แม่แบบ 11 ข้อ</button>
           <button class="btn btn-danger btn-sm" onclick="clearGrid()">🗑️ ล้าง</button>
         </div>
         <div class="tbl-wrap" id="grid-wrap" style="border:1.5px solid var(--gray-200);border-radius:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:14px">
@@ -296,6 +297,65 @@ tr:nth-child(even) td{background:var(--gray-50)}
       <div class="btn-group" style="margin-top:12px">
         <button class="btn btn-success btn-sm" onclick="promptSaveDataset()">💾 บันทึกชุดข้อมูลนี้</button>
         <button class="btn btn-danger btn-sm" onclick="clearData()">🗑️ ล้างข้อมูล</button>
+      </div>
+    </div>
+
+    <!-- Transform Data -->
+    <div class="card" id="transform-card" style="display:none">
+      <div class="card-title"><div class="icon icon-orange">🔄</div>แปลงข้อมูล</div>
+
+      <!-- Section A: Sum columns -->
+      <div style="padding-bottom:18px;margin-bottom:18px;border-bottom:1.5px solid var(--gray-200)">
+        <p style="font-weight:700;font-size:.9rem;margin-bottom:4px">📊 รวมคะแนนหลายข้อ → คอลัมน์ใหม่</p>
+        <p class="alpha-note" style="margin-bottom:10px">เช่น เลือก ข้อ1–ข้อ11 แล้วกดสร้าง จะได้ "คะแนนรวม" โดยอัตโนมัติ</p>
+        <div class="row row-2">
+          <div>
+            <label>เลือกคอลัมน์ที่จะรวม</label>
+            <select id="transform-sum-cols" multiple size="6" style="font-size:.83rem"></select>
+            <button class="btn btn-outline btn-sm" style="margin-top:6px" onclick="selectAllTransformSum()">เลือกทั้งหมด</button>
+          </div>
+          <div>
+            <label>ชื่อคอลัมน์ผลรวม</label>
+            <input type="text" id="transform-sum-name" value="คะแนนรวม" placeholder="คะแนนรวม">
+            <div style="margin-top:12px">
+              <button class="btn btn-primary" onclick="runSumCols()">➕ สร้างคอลัมน์รวม</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section B: Pivot before/after -->
+      <div>
+        <p style="font-weight:700;font-size:.9rem;margin-bottom:4px">🔄 จับคู่ครั้งที่ 1/2 → วันแรก/วันหลัง</p>
+        <p class="alpha-note" style="margin-bottom:10px">ใช้เมื่อข้อมูลมีครั้งที่ 1 และ 2 เป็นแถวแยกกัน และต้องการวิเคราะห์สหสัมพันธ์หรือ Regression</p>
+        <div class="row row-2" style="margin-bottom:12px">
+          <div>
+            <label>คอลัมน์แบ่งก่อน/หลัง (เช่น ครั้งที่)</label>
+            <select id="transform-pivot-round"></select>
+          </div>
+          <div>
+            <label>คอลัมน์คะแนน (เช่น คะแนนรวม)</label>
+            <select id="transform-pivot-score"></select>
+          </div>
+        </div>
+        <div class="row row-2" style="margin-bottom:12px">
+          <div>
+            <label>ค่าที่หมายถึง "ก่อน / วันแรก"</label>
+            <input type="text" id="transform-pivot-val1" value="1" placeholder="เช่น 1">
+          </div>
+          <div>
+            <label>ค่าที่หมายถึง "หลัง / วันหลัง"</label>
+            <input type="text" id="transform-pivot-val2" value="2" placeholder="เช่น 2">
+          </div>
+        </div>
+        <div>
+          <label>คอลัมน์ระบุตัวบุคคล/กลุ่ม (เลือกทุกคอลัมน์ที่ใช้แยกกลุ่ม เช่น กลุ่มอายุ + เพศ)</label>
+          <select id="transform-pivot-id" multiple size="5" style="font-size:.83rem"></select>
+          <p class="alpha-note">กด Ctrl/⌘+แตะ เพื่อเลือกหลายรายการ</p>
+        </div>
+        <div class="btn-group" style="margin-top:14px">
+          <button class="btn btn-primary" onclick="runPivot()">🔄 สร้างตารางคู่วันแรก-วันหลัง</button>
+        </div>
       </div>
     </div>
 
@@ -710,6 +770,7 @@ function loadData(headers, rows){
     return sample.length > 0 && sample.every(v=>!isNaN(parseFloat(v)));
   });
   showPreview();
+  renderTransformUI();
   toast(`✅ โหลดข้อมูลสำเร็จ ${rows.length} แถว ${headers.length} ตัวแปร`);
   try { localStorage.setItem('statpad_data', JSON.stringify({COLS, DATA, NUM_COLS})); } catch(e){}
 }
@@ -788,6 +849,7 @@ function loadSampleData(){
 function clearData(){
   DATA = []; COLS = []; NUM_COLS = [];
   document.getElementById('preview-card').style.display = 'none';
+  document.getElementById('transform-card').style.display = 'none';
   localStorage.removeItem('statpad_data');
   toast('🗑️ ล้างข้อมูลแล้ว');
 }
@@ -2224,6 +2286,98 @@ function renderSavedList(){
 }
 
 /* ═══════════════════════════════════════════════════════
+   TRANSFORM DATA
+═══════════════════════════════════════════════════════ */
+function renderTransformUI(){
+  const card = document.getElementById('transform-card');
+  if(!DATA.length){ card.style.display='none'; return; }
+  card.style.display='';
+
+  const sumSel = document.getElementById('transform-sum-cols');
+  sumSel.innerHTML = NUM_COLS.map(c=>`<option value="${c}">${c}</option>`).join('');
+  [...sumSel.options].forEach(o=>{ o.selected = /^ข้อ\d+$/.test(o.value); });
+
+  fillSelect('transform-pivot-round', COLS);
+  fillSelect('transform-pivot-score', NUM_COLS);
+  fillSelect('transform-pivot-id', COLS, true);
+
+  const rSel = document.getElementById('transform-pivot-round');
+  const rOpt = [...rSel.options].find(o=>/ครั้ง|round/i.test(o.value));
+  if(rOpt) rSel.value = rOpt.value;
+
+  const sSel = document.getElementById('transform-pivot-score');
+  const sOpt = [...sSel.options].find(o=>/รวม|total/i.test(o.value));
+  if(sOpt) sSel.value = sOpt.value;
+
+  const roundVal = document.getElementById('transform-pivot-round').value;
+  const idSel = document.getElementById('transform-pivot-id');
+  [...idSel.options].forEach(o=>{
+    o.selected = !NUM_COLS.includes(o.value) && o.value !== roundVal;
+  });
+}
+
+function selectAllTransformSum(){
+  [...document.getElementById('transform-sum-cols').options].forEach(o=>o.selected=true);
+}
+
+function runSumCols(){
+  const selected = getSelected('transform-sum-cols');
+  const newName = document.getElementById('transform-sum-name').value.trim() || 'คะแนนรวม';
+  if(!selected.length){ toast('⚠️ เลือกคอลัมน์ที่ต้องการรวมก่อน'); return; }
+
+  DATA.forEach(row=>{
+    row[newName] = selected.reduce((acc,col)=>{
+      const v = parseFloat(row[col]);
+      return acc + (isNaN(v) ? 0 : v);
+    }, 0);
+  });
+
+  if(!COLS.includes(newName)) COLS.push(newName);
+  NUM_COLS = COLS.filter(h=>{
+    const sample = DATA.slice(0,50).map(r=>r[h]).filter(v=>v!=='');
+    return sample.length>0 && sample.every(v=>!isNaN(parseFloat(v)));
+  });
+
+  showPreview();
+  renderTransformUI();
+  refreshSelects();
+  try { localStorage.setItem('statpad_data', JSON.stringify({COLS,DATA,NUM_COLS})); } catch(e){}
+  toast(`✅ เพิ่มคอลัมน์ "${newName}" (รวม ${selected.length} ข้อ)`);
+}
+
+function runPivot(){
+  const roundCol  = document.getElementById('transform-pivot-round').value;
+  const val1      = document.getElementById('transform-pivot-val1').value.trim();
+  const val2      = document.getElementById('transform-pivot-val2').value.trim();
+  const scoreCol  = document.getElementById('transform-pivot-score').value;
+  const idCols    = getSelected('transform-pivot-id');
+
+  if(!roundCol||!scoreCol||!idCols.length){ toast('⚠️ เลือกคอลัมน์ให้ครบก่อน'); return; }
+
+  const lookup = {};
+  DATA.forEach(row=>{
+    const key = idCols.map(c=>String(row[c]||'')).join('|||');
+    if(!lookup[key]) lookup[key] = {_ids: idCols.map(c=>row[c]||'')};
+    const rv = String(row[roundCol]||'').trim();
+    if(rv===val1) lookup[key]['วันแรก'] = row[scoreCol];
+    else if(rv===val2) lookup[key]['วันหลัง'] = row[scoreCol];
+  });
+
+  const newHeaders = [...idCols, 'วันแรก', 'วันหลัง'];
+  const newRows = Object.values(lookup).map(entry=>{
+    const obj = {};
+    idCols.forEach((c,i)=>{ obj[c] = entry._ids[i]; });
+    obj['วันแรก']  = entry['วันแรก']  ?? '';
+    obj['วันหลัง'] = entry['วันหลัง'] ?? '';
+    return obj;
+  });
+
+  if(!newRows.length){ toast('❌ ไม่พบข้อมูลที่ตรงกัน — ตรวจสอบค่า ก่อน/หลัง อีกครั้ง'); return; }
+  loadData(newHeaders, newRows);
+  toast(`✅ จับคู่สำเร็จ — ได้ ${newRows.length} แถว พร้อมคอลัมน์วันแรก/วันหลัง`);
+}
+
+/* ═══════════════════════════════════════════════════════
    SPREADSHEET GRID
 ═══════════════════════════════════════════════════════ */
 let gCols = 4;
@@ -2307,6 +2461,16 @@ function loadFromGrid(){
   const rows=validRows.map(r=>{ const o={}; headers.forEach((h,i)=>{ o[h]=r[i]||''; }); return o; });
   loadData(headers, rows);
 }
+function loadItemTemplate(){
+  const hdrs = ['กลุ่มอายุ','เพศ','ครั้งที่','ข้อ1','ข้อ2','ข้อ3','ข้อ4','ข้อ5','ข้อ6','ข้อ7','ข้อ8','ข้อ9','ข้อ10','ข้อ11'];
+  gCols = hdrs.length;
+  gRows = Math.max(gRows, 15);
+  renderGrid();
+  hdrs.forEach((h,c)=>{ const el=document.getElementById(`gh-${c}`); if(el) el.value=h; });
+  saveGrid();
+  toast('✅ โหลดแม่แบบ 11 ข้อแล้ว — กรอกข้อมูลแล้วกด "📥 โหลดข้อมูลจากตาราง"');
+}
+
 function loadSampleToGrid(){
   const hdrs=['ชื่อ','เพศ','คณะ','ชั้นปี','GPA','คะแนนA','คะแนนB','ความพึงพอใจ'];
   const rows=[
@@ -2337,7 +2501,7 @@ try {
   if(sd){
     const s = JSON.parse(sd);
     COLS = s.COLS||[]; DATA = s.DATA||[]; NUM_COLS = s.NUM_COLS||[];
-    if(DATA.length){ showPreview(); setTimeout(()=>toast(`📂 โหลดข้อมูลที่บันทึกไว้ ${DATA.length} แถว`,3000), 400); }
+    if(DATA.length){ showPreview(); renderTransformUI(); setTimeout(()=>toast(`📂 โหลดข้อมูลที่บันทึกไว้ ${DATA.length} แถว`,3000), 400); }
   }
 } catch(e){}
 renderSavedList();
