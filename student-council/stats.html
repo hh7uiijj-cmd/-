@@ -2245,10 +2245,19 @@ function promptSaveDataset(){
 }
 
 function loadDataset(i){
-  const s = getSaves()[i];
-  if(!s) return;
-  COLS = s.COLS; DATA = s.DATA; NUM_COLS = s.NUM_COLS;
+  const saves = getSaves();
+  const s = saves[i];
+  if(!s){ toast('❌ ไม่พบชุดข้อมูล'); return; }
+  if(!s.COLS?.length || !s.DATA?.length){ toast('❌ ชุดข้อมูลว่างเปล่า'); return; }
+  COLS = s.COLS;
+  DATA = s.DATA;
+  NUM_COLS = s.NUM_COLS?.length ? s.NUM_COLS : COLS.filter(h=>{
+    const sample = DATA.slice(0,30).map(r=>r[h]).filter(v=>v!=='');
+    return sample.length>0 && sample.every(v=>!isNaN(parseFloat(v)));
+  });
   showPreview();
+  renderTransformUI();
+  refreshSelects();
   try{ localStorage.setItem('statpad_data', JSON.stringify({COLS, DATA, NUM_COLS})); }catch(e){}
   toast(`📂 โหลด "${s.name}" — ${DATA.length} แถว`);
 }
