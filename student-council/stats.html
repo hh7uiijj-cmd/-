@@ -170,6 +170,33 @@ tr:nth-child(even) td{background:var(--gray-50)}
 .calc-eq:active{background:var(--blue-dark)}
 .calc-clear{background:var(--red-light);color:var(--red)}
 
+/* ─── Section nav (SPSS-style 3 sections) ─── */
+.section-nav{display:flex;gap:0;margin-bottom:12px;border-radius:var(--radius);
+  overflow:hidden;border:1.5px solid var(--gray-200);background:#fff;box-shadow:var(--shadow)}
+.snav-btn{flex:1;padding:13px 8px 11px;border:none;font-family:var(--font);font-size:.88rem;
+  font-weight:700;cursor:pointer;background:#fff;color:var(--gray-600);transition:all .15s;
+  display:flex;flex-direction:column;align-items:center;gap:3px;touch-action:manipulation;
+  border-right:1.5px solid var(--gray-200);position:relative}
+.snav-btn:last-child{border-right:none}
+.snav-icon{font-size:1.25rem;line-height:1}
+.snav-btn.active{background:var(--blue);color:#fff}
+.snav-btn:active{opacity:.82}
+.snav-badge{position:absolute;top:6px;right:8px;background:var(--red);color:#fff;
+  border-radius:20px;padding:1px 6px;font-size:.65rem;font-weight:800;min-width:16px;text-align:center}
+.section-shell{background:var(--gray-50);border:1.5px solid var(--gray-200);
+  border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px}
+.analyze-subtabs{display:flex;gap:4px;flex-wrap:wrap;padding:12px 12px 12px}
+.analyze-subtabs .tab{font-size:.8rem;padding:7px 12px}
+
+/* ─── Output viewer ─── */
+.output-item{border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);
+  margin-bottom:14px;overflow:hidden}
+.output-item-hdr{background:var(--blue-light);padding:9px 14px;display:flex;
+  align-items:center;gap:8px;border-bottom:1.5px solid #c8d9f8}
+.output-item-title{font-weight:700;color:var(--blue-dark);flex:1;font-size:.9rem}
+.output-item-time{font-size:.73rem;color:var(--gray-400)}
+.output-item-body{padding:14px}
+
 /* ─── Filter chips ─── */
 .filter-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px}
 .filter-label{font-size:.75rem;font-weight:700;color:var(--gray-400);white-space:nowrap;min-width:60px}
@@ -215,21 +242,40 @@ tr:nth-child(even) td{background:var(--gray-50)}
 
 <div class="container">
 
-  <!-- Navigation Tabs -->
-  <div class="tabs">
-    <button class="tab active" onclick="showPanel('data')">📥 นำเข้าข้อมูล</button>
-    <button class="tab" onclick="showPanel('desc')">📈 สถิติเชิงพรรณนา</button>
-    <button class="tab" onclick="showPanel('freq')">📊 ความถี่ / ร้อยละ</button>
-    <button class="tab" onclick="showPanel('ttest')">⚖️ T-Test</button>
-    <button class="tab" onclick="showPanel('anova')">🔬 ANOVA</button>
-    <button class="tab" onclick="showPanel('corr')">🔗 สหสัมพันธ์</button>
-    <button class="tab" onclick="showPanel('chi')">✅ Chi-Square</button>
-    <button class="tab" onclick="showPanel('alpha')">🔐 Cronbach's α</button>
-    <button class="tab" onclick="showPanel('reg')">📉 Regression</button>
-    <button class="tab" onclick="showPanel('nonpar')">🔀 Nonparametric</button>
-    <button class="tab" onclick="showPanel('zscore')">📐 Z / T / IQ</button>
-    <button class="tab" onclick="showPanel('samplesize')">🎯 ขนาดกลุ่มตัวอย่าง</button>
-    <button class="tab" onclick="showPanel('calc')">🔢 เครื่องคิดเลข</button>
+  <!-- Section Nav (SPSS-style) -->
+  <div class="section-nav">
+    <button class="snav-btn active" id="snav-data" onclick="showSection('data')">
+      <span class="snav-icon">📊</span>
+      <span>ข้อมูล</span>
+    </button>
+    <button class="snav-btn" id="snav-analyze" onclick="showSection('analyze')">
+      <span class="snav-icon">🔬</span>
+      <span>วิเคราะห์</span>
+    </button>
+    <button class="snav-btn" id="snav-output" onclick="showSection('output')">
+      <span class="snav-icon">📋</span>
+      <span>ผลลัพธ์</span>
+      <span class="snav-badge" id="output-badge" style="display:none">0</span>
+    </button>
+  </div>
+
+  <!-- Analysis Sub-tabs (shown only in วิเคราะห์ section) -->
+  <div id="analyze-tabs-wrap" class="section-shell" style="display:none">
+    <div class="analyze-subtabs" id="analyze-tabs">
+      <button class="tab" onclick="showPanel('desc')">📈 สถิติพรรณนา</button>
+      <button class="tab" onclick="showPanel('freq')">📊 ความถี่</button>
+      <button class="tab" onclick="showPanel('ttest')">⚖️ T-Test</button>
+      <button class="tab" onclick="showPanel('anova')">🔬 ANOVA</button>
+      <button class="tab" onclick="showPanel('corr')">🔗 สหสัมพันธ์</button>
+      <button class="tab" onclick="showPanel('chi')">✅ Chi-Square</button>
+      <button class="tab" onclick="showPanel('alpha')">🔐 Cronbach's α</button>
+      <button class="tab" onclick="showPanel('reg')">📉 Regression</button>
+      <button class="tab" onclick="showPanel('nonpar')">🔀 Nonparametric</button>
+      <button class="tab" onclick="showPanel('zscore')">📐 Z/T/IQ</button>
+      <button class="tab" onclick="showPanel('samplesize')">🎯 กลุ่มตัวอย่าง</button>
+      <button class="tab" onclick="showPanel('calc')">🔢 คิดเลข</button>
+    </div>
+    <!-- analysis panels rendered below, scoped within this shell -->
   </div>
 
   <!-- ══════════════════════════════════════════════════
@@ -723,6 +769,26 @@ tr:nth-child(even) td{background:var(--gray-50)}
     </div>
   </div>
 
+  <!-- ══════════════════════════════════════════════════
+       PANEL — Output Viewer
+  ══════════════════════════════════════════════════ -->
+  <div id="panel-output" class="panel">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon icon-blue">📋</div>
+        Output Viewer
+        <span id="output-count" class="badge" style="background:var(--blue-light);color:var(--blue-dark);margin-left:4px">0 รายการ</span>
+        <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="clearOutput()">🗑️ ล้าง</button>
+      </div>
+      <div id="output-empty" style="text-align:center;padding:36px 20px;color:var(--gray-400)">
+        <div style="font-size:2.5rem;margin-bottom:8px">📋</div>
+        <p>ยังไม่มีผลการวิเคราะห์</p>
+        <p style="font-size:.83rem;margin-top:6px">หลังคำนวณในแท็บ <b>วิเคราะห์</b> กดปุ่ม <b>➕ ส่งไปผลลัพธ์</b> เพื่อเก็บผลไว้ที่นี่</p>
+      </div>
+      <div id="output-items"></div>
+    </div>
+  </div>
+
 </div><!-- /container -->
 
 <!-- Custom modal — replaces prompt()/confirm() which iOS Safari PWA blocks -->
@@ -746,16 +812,52 @@ tr:nth-child(even) td{background:var(--gray-50)}
 let DATA = [];          // array of objects
 let COLS = [];          // column names
 let NUM_COLS = [];      // numeric column names
+let CURRENT_SECTION = 'data';
+let LAST_ANALYZE_PANEL = 'desc';
+let OUTPUT_ITEMS = [];
+const ANALYZE_PANELS = ['desc','freq','ttest','anova','corr','chi','alpha','reg','nonpar','zscore','samplesize','calc'];
 
 /* ═══════════════════════════════════════════════════════
    UI HELPERS
 ═══════════════════════════════════════════════════════ */
-function showPanel(id){
+function showSection(section){
+  CURRENT_SECTION = section;
+  ['data','analyze','output'].forEach(s=>{
+    document.getElementById('snav-'+s).classList.toggle('active', s===section);
+  });
+  document.getElementById('analyze-tabs-wrap').style.display = section==='analyze' ? '' : 'none';
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tabs > .tab').forEach(t=>t.classList.remove('active'));
+  if(section==='data'){
+    document.getElementById('panel-data').classList.add('active');
+  } else if(section==='analyze'){
+    const target = document.getElementById('panel-'+LAST_ANALYZE_PANEL);
+    if(target) target.classList.add('active');
+    document.querySelectorAll('#analyze-tabs .tab').forEach(t=>t.classList.remove('active'));
+    const idx = ANALYZE_PANELS.indexOf(LAST_ANALYZE_PANEL);
+    document.querySelectorAll('#analyze-tabs .tab')[idx]?.classList.add('active');
+    if(DATA.length){ refreshSelects(); }
+    else { toast('💡 นำเข้าข้อมูลในแท็บ ข้อมูล ก่อนวิเคราะห์', 3000); }
+  } else {
+    document.getElementById('panel-output').classList.add('active');
+  }
+}
+
+function showPanel(id){
+  if(ANALYZE_PANELS.includes(id)){
+    LAST_ANALYZE_PANEL = id;
+    if(CURRENT_SECTION !== 'analyze'){
+      CURRENT_SECTION = 'analyze';
+      ['data','analyze','output'].forEach(s=>{
+        document.getElementById('snav-'+s).classList.toggle('active', s==='analyze');
+      });
+      document.getElementById('analyze-tabs-wrap').style.display = '';
+    }
+  }
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
-  const idx = ['data','desc','freq','ttest','anova','corr','chi','alpha','reg','nonpar','zscore','samplesize','calc'].indexOf(id);
-  document.querySelectorAll('.tabs > .tab')[idx]?.classList.add('active');
+  document.querySelectorAll('#analyze-tabs .tab').forEach(t=>t.classList.remove('active'));
+  const idx = ANALYZE_PANELS.indexOf(id);
+  if(idx>=0) document.querySelectorAll('#analyze-tabs .tab')[idx]?.classList.add('active');
   if(id!=='data') refreshSelects();
 }
 
@@ -764,6 +866,62 @@ function toast(msg, dur=2500){
   el.textContent = msg;
   el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'), dur);
+}
+
+/* ═══════════════════════════════════════════════════════
+   OUTPUT VIEWER
+═══════════════════════════════════════════════════════ */
+function addToOutput(panelId){
+  const el = document.getElementById(`${panelId}-result`);
+  if(!el || !el.innerHTML.trim()){ toast('⚠️ ยังไม่มีผลการวิเคราะห์'); return; }
+  const panelNames = {
+    desc:'สถิติเชิงพรรณนา', freq:'ความถี่ / ร้อยละ', ttest:'T-Test',
+    anova:'One-Way ANOVA', corr:'สหสัมพันธ์', chi:'Chi-Square',
+    alpha:"Cronbach's Alpha", reg:'Linear Regression', nonpar:'Nonparametric',
+    zscore:'Z / T / IQ Score'
+  };
+  OUTPUT_ITEMS.push({
+    id: Date.now(),
+    title: panelNames[panelId] || panelId,
+    html: el.innerHTML,
+    time: new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})
+  });
+  renderOutput();
+  toast('✅ ส่งผลไปยัง Output Viewer แล้ว — ดูได้ในแท็บ ผลลัพธ์');
+}
+
+function removeFromOutput(id){
+  OUTPUT_ITEMS = OUTPUT_ITEMS.filter(item=>item.id!==id);
+  renderOutput();
+}
+
+function clearOutput(){
+  if(!OUTPUT_ITEMS.length) return;
+  OUTPUT_ITEMS = [];
+  renderOutput();
+  toast('🗑️ ล้าง Output แล้ว');
+}
+
+function renderOutput(){
+  const n = OUTPUT_ITEMS.length;
+  document.getElementById('output-count').textContent = `${n} รายการ`;
+  const badge = document.getElementById('output-badge');
+  badge.textContent = n;
+  badge.style.display = n>0 ? '' : 'none';
+  document.getElementById('output-empty').style.display = n===0 ? '' : 'none';
+  const container = document.getElementById('output-items');
+  if(!n){ container.innerHTML=''; return; }
+  container.innerHTML = OUTPUT_ITEMS.map((item,i)=>`
+    <div class="output-item">
+      <div class="output-item-hdr">
+        <span style="font-size:.78rem;color:var(--gray-400);margin-right:4px">#${i+1}</span>
+        <span class="output-item-title">${item.title}</span>
+        <span class="output-item-time">${item.time}</span>
+        <button class="btn btn-danger btn-sm" style="margin-left:8px;padding:4px 10px" onclick="removeFromOutput(${item.id})">✕</button>
+      </div>
+      <div class="output-item-body">${item.html}</div>
+    </div>
+  `).join('');
 }
 
 function switchImport(mode){
@@ -1485,7 +1643,8 @@ function runChi(){
 function exportBar(id){
   return `<div class="export-bar">
     <button class="btn btn-outline btn-sm" onclick="copyResult('${id}')">📋 คัดลอกผล</button>
-    <button class="btn btn-outline btn-sm" onclick="printResult('${id}')">🖨️ พิมพ์ / บันทึก PDF</button>
+    <button class="btn btn-outline btn-sm" onclick="printResult('${id}')">🖨️ พิมพ์ / PDF</button>
+    <button class="btn btn-primary btn-sm" onclick="addToOutput('${id}')">➕ ส่งไปผลลัพธ์</button>
   </div>`;
 }
 
