@@ -705,6 +705,18 @@ tr:nth-child(even) td{background:var(--gray-50)}
 
 </div><!-- /container -->
 
+<!-- Custom modal — replaces prompt()/confirm() which iOS Safari PWA blocks -->
+<div id="sp-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:18px;padding:24px 22px 20px;width:100%;max-width:360px;box-shadow:0 12px 40px rgba(0,0,0,.25)">
+    <div id="sp-modal-title" style="font-weight:800;font-size:1rem;color:var(--gray-800);margin-bottom:14px;line-height:1.4"></div>
+    <input id="sp-modal-input" type="text" style="display:none;margin-bottom:14px">
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button id="sp-modal-cancel" class="btn btn-outline btn-sm">ยกเลิก</button>
+      <button id="sp-modal-ok" class="btn btn-primary btn-sm">ตกลง</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2227,19 +2239,46 @@ function renderCalcHist(){
 }
 
 /* ═══════════════════════════════════════════════════════
+   CUSTOM MODAL (replaces prompt/confirm — blocked in iOS PWA)
+═══════════════════════════════════════════════════════ */
+function spModal(title, {input=false, defaultVal=''}={}){
+  return new Promise(resolve=>{
+    const overlay = document.getElementById('sp-modal');
+    const inp     = document.getElementById('sp-modal-input');
+    const titleEl = document.getElementById('sp-modal-title');
+    const okBtn   = document.getElementById('sp-modal-ok');
+    const cancelBtn = document.getElementById('sp-modal-cancel');
+
+    titleEl.textContent = title;
+    inp.style.display = input ? '' : 'none';
+    inp.value = defaultVal;
+    overlay.style.display = 'flex';
+    if(input) setTimeout(()=>inp.focus(),80);
+
+    const finish = val => { overlay.style.display='none'; resolve(val); };
+    okBtn.onclick     = () => finish(input ? inp.value : true);
+    cancelBtn.onclick = () => finish(null);
+    inp.onkeydown = e => { if(e.key==='Enter') okBtn.click(); if(e.key==='Escape') cancelBtn.click(); };
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
    SAVED DATASETS
 ═══════════════════════════════════════════════════════ */
 function getSaves(){ try{ return JSON.parse(localStorage.getItem('statpad_saves')||'[]'); }catch(e){ return []; } }
-function putSaves(arr){ try{ localStorage.setItem('statpad_saves',JSON.stringify(arr)); }catch(e){} }
+function putSaves(arr){
+  try{ localStorage.setItem('statpad_saves',JSON.stringify(arr)); return true; }
+  catch(e){ return false; }
+}
 
-function promptSaveDataset(){
+async function promptSaveDataset(){
   if(!DATA.length){ toast('นำเข้าข้อมูลก่อน'); return; }
-  const name = prompt('ตั้งชื่อชุดข้อมูล:', `ชุดข้อมูล ${new Date().toLocaleDateString('th-TH')}`);
+  const name = await spModal('ตั้งชื่อชุดข้อมูล', {input:true, defaultVal:`ชุดข้อมูล ${new Date().toLocaleDateString('th-TH')}`});
   if(name===null) return;
   const label = name.trim() || `ชุดข้อมูล ${new Date().toLocaleDateString('th-TH')}`;
   const saves = getSaves();
   saves.unshift({ name: label, date: new Date().toLocaleDateString('th-TH'), COLS, DATA, NUM_COLS });
-  putSaves(saves);
+  if(!putSaves(saves)){ toast('❌ บันทึกไม่ได้ — พื้นที่ Storage เต็ม', 4000); return; }
   renderSavedList();
   toast(`💾 บันทึก "${label}" แล้ว`);
 }
@@ -2262,10 +2301,11 @@ function loadDataset(i){
   toast(`📂 โหลด "${s.name}" — ${DATA.length} แถว`);
 }
 
-function deleteDataset(i){
+async function deleteDataset(i){
   const saves = getSaves();
   const name = saves[i]?.name||'';
-  if(!confirm(`ลบ "${name}" ออกจากรายการที่บันทึกไว้?`)) return;
+  const ok = await spModal(`ลบ "${name}" ออกจากรายการที่บันทึกไว้?`);
+  if(!ok) return;
   saves.splice(i,1);
   putSaves(saves);
   renderSavedList();
