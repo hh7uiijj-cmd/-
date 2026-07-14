@@ -353,6 +353,14 @@ tr:nth-child(even) td{background:var(--gray-50)}
         <button class="btn btn-success btn-sm" onclick="promptSaveDataset()">💾 บันทึกชุดข้อมูลนี้</button>
         <button class="btn btn-danger btn-sm" onclick="clearData()">🗑️ ล้างข้อมูล</button>
       </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-200)">
+        <p class="data-hint" style="margin-bottom:8px">ดาวน์โหลดข้อมูลทั้งหมด:</p>
+        <div class="btn-group" style="gap:8px">
+          <button class="btn btn-outline btn-sm" onclick="exportDataCSV()">📄 CSV</button>
+          <button class="btn btn-outline btn-sm" onclick="exportDataXLSX()">📊 Excel (.xlsx)</button>
+          <button class="btn btn-outline btn-sm" onclick="exportDataPNG()">📸 PNG</button>
+        </div>
+      </div>
     </div>
 
     <!-- Filter Card -->
@@ -2327,6 +2335,37 @@ function _drawPNG(hdrs,rows){
   c.strokeRect(PAD+0.5,PAD+0.5,TW-1,TH-1);
 
   cv.toBlob(blob=>{ dlBlob(blob,'ข้อมูล.png'); toast('📸 บันทึก PNG แล้ว'); });
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXPORT LOADED DATA (preview table → CSV/XLSX/PNG)
+═══════════════════════════════════════════════════════ */
+function exportDataCSV(){
+  if(!DATA.length){ toast('⚠️ ยังไม่มีข้อมูล'); return; }
+  const esc=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const csv=[COLS.map(esc).join(','),...DATA.map(r=>COLS.map(c=>esc(r[c]??'')).join(','))].join('\r\n');
+  dlBlob(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}),'ข้อมูล.csv');
+  toast('📄 บันทึก CSV แล้ว');
+}
+
+function exportDataXLSX(){
+  if(!DATA.length){ toast('⚠️ ยังไม่มีข้อมูล'); return; }
+  toast('⏳ กำลังสร้างไฟล์ Excel...');
+  loadScript('https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js', ()=>{
+    const rows=DATA.map(r=>COLS.map(c=>r[c]??''));
+    const ws=XLSX.utils.aoa_to_sheet([COLS,...rows]);
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'ข้อมูล');
+    XLSX.writeFile(wb,'ข้อมูล.xlsx');
+    toast('📊 บันทึก Excel แล้ว');
+  });
+}
+
+function exportDataPNG(){
+  if(!DATA.length){ toast('⚠️ ยังไม่มีข้อมูล'); return; }
+  toast('⏳ กำลังสร้างรูป...');
+  const rows=DATA.map(r=>COLS.map(c=>String(r[c]??'')));
+  document.fonts.ready.then(()=>_drawPNG(COLS,rows));
 }
 
 /* ═══════════════════════════════════════════════════════
