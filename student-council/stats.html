@@ -170,6 +170,15 @@ tr:nth-child(even) td{background:var(--gray-50)}
 .calc-eq:active{background:var(--blue-dark)}
 .calc-clear{background:var(--red-light);color:var(--red)}
 
+/* ─── Filter chips ─── */
+.filter-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px}
+.filter-label{font-size:.75rem;font-weight:700;color:var(--gray-400);white-space:nowrap;min-width:60px}
+.fchip{padding:5px 13px;border:1.5px solid var(--gray-300);border-radius:20px;
+  font-family:var(--font);font-size:.8rem;font-weight:600;cursor:pointer;
+  background:#fff;color:var(--gray-600);transition:all .12s;touch-action:manipulation}
+.fchip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.fchip:active{transform:scale(.94)}
+
 /* ─── Spreadsheet Grid ─── */
 .grid-tbl{border-collapse:collapse;font-size:.82rem;width:max-content}
 .grid-tbl th,.grid-tbl td{padding:0;margin:0}
@@ -298,6 +307,17 @@ tr:nth-child(even) td{background:var(--gray-50)}
         <button class="btn btn-success btn-sm" onclick="promptSaveDataset()">💾 บันทึกชุดข้อมูลนี้</button>
         <button class="btn btn-danger btn-sm" onclick="clearData()">🗑️ ล้างข้อมูล</button>
       </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card" id="filter-card" style="display:none">
+      <div class="card-title" style="margin-bottom:10px">
+        <div class="icon icon-blue">🔍</div>
+        กรองข้อมูล
+        <span id="filter-badge" class="badge" style="background:var(--blue-light);color:var(--blue-dark);margin-left:6px"></span>
+        <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="clearFilters()">ล้างตัวกรอง</button>
+      </div>
+      <div id="filter-controls"></div>
     </div>
 
     <!-- Transform Data -->
@@ -781,7 +801,9 @@ function loadData(headers, rows){
     const sample = rows.slice(0,50).map(r=>r[h]).filter(v=>v!=='');
     return sample.length > 0 && sample.every(v=>!isNaN(parseFloat(v)));
   });
+  FILTERS = {};
   showPreview();
+  renderFilterUI();
   renderTransformUI();
   toast(`✅ โหลดข้อมูลสำเร็จ ${rows.length} แถว ${headers.length} ตัวแปร`);
   try { localStorage.setItem('statpad_data', JSON.stringify({COLS, DATA, NUM_COLS})); } catch(e){}
@@ -860,7 +882,9 @@ function loadSampleData(){
 
 function clearData(){
   DATA = []; COLS = []; NUM_COLS = [];
+  FILTERS = {};
   document.getElementById('preview-card').style.display = 'none';
+  document.getElementById('filter-card').style.display = 'none';
   document.getElementById('transform-card').style.display = 'none';
   localStorage.removeItem('statpad_data');
   toast('🗑️ ล้างข้อมูลแล้ว');
@@ -931,7 +955,7 @@ function getSelected(id){
    MATH UTILITIES
 ═══════════════════════════════════════════════════════ */
 function numVals(col){
-  return DATA.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));
+  return FD().map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));
 }
 
 function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
@@ -1099,8 +1123,8 @@ function runFreq(){
   if(!v){ toast('เลือกตัวแปร'); return; }
 
   const counts = {};
-  DATA.forEach(r=>{ const val=r[v]??'(ว่าง)'; counts[val]=(counts[val]||0)+1; });
-  const total = DATA.length;
+  FD().forEach(r=>{ const val=r[v]??'(ว่าง)'; counts[val]=(counts[val]||0)+1; });
+  const total = FD().length;
   const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
   let cum = 0;
 
@@ -1177,7 +1201,7 @@ function runTTest(){
     const grp = document.getElementById('tt-grp')?.value;
     if(!dep||!grp) return;
     const groups = {};
-    DATA.forEach(r=>{
+    FD().forEach(r=>{
       const g = r[grp]; const v = parseFloat(r[dep]);
       if(!isNaN(v)){ if(!groups[g])groups[g]=[]; groups[g].push(v); }
     });
@@ -1202,7 +1226,7 @@ function runTTest(){
     const v1 = document.getElementById('tt-v1')?.value;
     const v2 = document.getElementById('tt-v2')?.value;
     if(!v1||!v2) return;
-    const pairs = DATA.map(r=>[parseFloat(r[v1]),parseFloat(r[v2])]).filter(p=>!isNaN(p[0])&&!isNaN(p[1]));
+    const pairs = FD().map(r=>[parseFloat(r[v1]),parseFloat(r[v2])]).filter(p=>!isNaN(p[0])&&!isNaN(p[1]));
     const diff = pairs.map(p=>p[0]-p[1]);
     const n=diff.length, m=mean(diff), s=sd(diff);
     const t = m/(s/Math.sqrt(n));
@@ -1241,7 +1265,7 @@ function runANOVA(){
   const grp = document.getElementById('anova-grp').value;
 
   const groups = {};
-  DATA.forEach(r=>{
+  FD().forEach(r=>{
     const g=r[grp], v=parseFloat(r[dep]);
     if(!isNaN(v)){ if(!groups[g])groups[g]=[]; groups[g].push(v); }
   });
@@ -1303,7 +1327,7 @@ function runCorr(){
 
   // build paired arrays
   function getPair(a,b){
-    const pairs=DATA.map(r=>[parseFloat(r[a]),parseFloat(r[b])]).filter(p=>!isNaN(p[0])&&!isNaN(p[1]));
+    const pairs=FD().map(r=>[parseFloat(r[a]),parseFloat(r[b])]).filter(p=>!isNaN(p[0])&&!isNaN(p[1]));
     return { x:pairs.map(p=>p[0]), y:pairs.map(p=>p[1]), n:pairs.length };
   }
 
@@ -1391,7 +1415,7 @@ function runChi(){
   if(rv===cv){ toast('ต้องเลือกตัวแปรต่างกัน'); return; }
 
   const rows=[], cols=[];
-  DATA.forEach(r=>{
+  FD().forEach(r=>{
     const rv_=String(r[rv]??''), cv_=String(r[cv]??'');
     if(!rows.includes(rv_)) rows.push(rv_);
     if(!cols.includes(cv_)) cols.push(cv_);
@@ -1400,7 +1424,7 @@ function runChi(){
 
   const obs={};
   rows.forEach(r=>cols.forEach(c=>{ obs[r+'\0'+c]=0; }));
-  DATA.forEach(r=>{ const key=String(r[rv]??'')+'\0'+String(r[cv]??''); if(obs[key]!==undefined) obs[key]++; });
+  FD().forEach(r=>{ const key=String(r[rv]??'')+'\0'+String(r[cv]??''); if(obs[key]!==undefined) obs[key]++; });
 
   const rowTot={}, colTot={};
   rows.forEach(r=>{ rowTot[r]=cols.reduce((s,c)=>s+obs[r+'\0'+c],0); });
@@ -1509,7 +1533,7 @@ function runAlpha(){
   if(vars.length < 2){ toast('เลือกอย่างน้อย 2 ข้อคำถาม'); return; }
 
   // build matrix: rows = respondents, cols = items
-  const matrix = DATA.map(r => vars.map(v => parseFloat(r[v]))).filter(row => row.every(v => !isNaN(v)));
+  const matrix = FD().map(r => vars.map(v => parseFloat(r[v]))).filter(row => row.every(v => !isNaN(v)));
   const n = matrix.length, k = vars.length;
   if(n < 2){ toast('ข้อมูลไม่พอ'); return; }
 
@@ -1584,7 +1608,7 @@ function runReg(){
 
   // build valid rows
   const cols = [dep,...inds];
-  const rows = DATA.map(r=>cols.map(c=>parseFloat(r[c]))).filter(r=>r.every(v=>!isNaN(v)));
+  const rows = FD().map(r=>cols.map(c=>parseFloat(r[c]))).filter(r=>r.every(v=>!isNaN(v)));
   const n=rows.length, p=inds.length;
   if(n <= p+1){ toast('ข้อมูลไม่พอสำหรับจำนวนตัวแปร'); return; }
 
@@ -1750,7 +1774,7 @@ function runNonpar(){
     const grp=document.getElementById('np-grp')?.value;
     if(!dep||!grp) return;
     const groups={};
-    DATA.forEach(r=>{ const g=r[grp],v=parseFloat(r[dep]); if(!isNaN(v)){ if(!groups[g])groups[g]=[]; groups[g].push(v); } });
+    FD().forEach(r=>{ const g=r[grp],v=parseFloat(r[dep]); if(!isNaN(v)){ if(!groups[g])groups[g]=[]; groups[g].push(v); } });
     const keys=Object.keys(groups);
     if(keys.length<2){ toast('ต้องมีอย่างน้อย 2 กลุ่ม'); return; }
     const [g1,g2]=[groups[keys[0]],groups[keys[1]]];
@@ -1784,7 +1808,7 @@ function runNonpar(){
     const v1=document.getElementById('np-v1')?.value;
     const v2=document.getElementById('np-v2')?.value;
     if(!v1||!v2) return;
-    const pairs=DATA.map(r=>[parseFloat(r[v1]),parseFloat(r[v2])]).filter(p=>!isNaN(p[0])&&!isNaN(p[1]));
+    const pairs=FD().map(r=>[parseFloat(r[v1]),parseFloat(r[v2])]).filter(p=>!isNaN(p[0])&&!isNaN(p[1]));
     const diffs=pairs.map(p=>p[0]-p[1]).filter(d=>d!==0);
     const n=diffs.length;
     if(n<5){ toast('ข้อมูลไม่พอ (ต้องการอย่างน้อย 5 คู่ที่ต่างกัน)'); return; }
@@ -1817,7 +1841,7 @@ function runNonpar(){
     const grp=document.getElementById('np-grp')?.value;
     if(!dep||!grp) return;
     const groups={};
-    DATA.forEach(r=>{ const g=r[grp],v=parseFloat(r[dep]); if(!isNaN(v)){ if(!groups[g])groups[g]=[]; groups[g].push(v); } });
+    FD().forEach(r=>{ const g=r[grp],v=parseFloat(r[dep]); if(!isNaN(v)){ if(!groups[g])groups[g]=[]; groups[g].push(v); } });
     const keys=Object.keys(groups).filter(k=>groups[k].length>=2);
     if(keys.length<3){ toast('Kruskal-Wallis ต้องมีอย่างน้อย 3 กลุ่ม'); return; }
 
@@ -2335,6 +2359,82 @@ function renderSavedList(){
 }
 
 /* ═══════════════════════════════════════════════════════
+   FILTER
+═══════════════════════════════════════════════════════ */
+let FILTERS = {};   // { col: Set<string> of ALLOWED values }
+
+function FD(){
+  // Returns active filtered subset of DATA
+  const keys = Object.keys(FILTERS);
+  if(!keys.length) return DATA;
+  return DATA.filter(row=>keys.every(col=>{
+    const s = FILTERS[col];
+    return !s || s.size===0 || s.has(String(row[col]??''));
+  }));
+}
+
+function renderFilterUI(){
+  const card = document.getElementById('filter-card');
+  if(!DATA.length){ card.style.display='none'; return; }
+
+  // Detect categorical columns (non-numeric, few unique values)
+  const catCols = COLS.filter(c=>{
+    if(NUM_COLS.includes(c)) return false;
+    const uniq = [...new Set(DATA.map(r=>String(r[c]??'')))];
+    return uniq.length >= 2 && uniq.length <= 20;
+  });
+
+  if(!catCols.length){ card.style.display='none'; return; }
+  card.style.display='';
+
+  // Init filters for new columns
+  catCols.forEach(col=>{
+    if(!FILTERS[col]){
+      FILTERS[col] = new Set(DATA.map(r=>String(r[col]??'')));
+    }
+  });
+  // Remove filters for columns no longer in dataset
+  Object.keys(FILTERS).forEach(k=>{ if(!COLS.includes(k)) delete FILTERS[k]; });
+
+  const ctrl = document.getElementById('filter-controls');
+  ctrl.innerHTML = catCols.map(col=>{
+    const uniq = [...new Set(DATA.map(r=>String(r[col]??'')))].sort();
+    const chips = uniq.map(v=>{
+      const on = FILTERS[col]?.has(v) ? 'on' : '';
+      return `<button class="fchip ${on}" onclick="toggleFilter('${col}','${v}')">${v}</button>`;
+    }).join('');
+    return `<div class="filter-row">
+      <span class="filter-label">${col}</span>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${chips}</div>
+    </div>`;
+  }).join('');
+
+  updateFilterBadge();
+}
+
+function toggleFilter(col, val){
+  if(!FILTERS[col]) FILTERS[col] = new Set(DATA.map(r=>String(r[col]??'')));
+  if(FILTERS[col].has(val)) FILTERS[col].delete(val);
+  else FILTERS[col].add(val);
+  renderFilterUI();
+}
+
+function clearFilters(){
+  COLS.forEach(col=>{
+    if(!NUM_COLS.includes(col))
+      FILTERS[col] = new Set(DATA.map(r=>String(r[col]??'')));
+  });
+  renderFilterUI();
+  toast('✅ ล้างตัวกรองแล้ว — แสดงข้อมูลทั้งหมด');
+}
+
+function updateFilterBadge(){
+  const n = FD().length;
+  const badge = document.getElementById('filter-badge');
+  if(badge) badge.textContent = `${n} / ${DATA.length} แถว`;
+}
+
+/* ═══════════════════════════════════════════════════════
    TRANSFORM DATA
 ═══════════════════════════════════════════════════════ */
 function renderTransformUI(){
@@ -2565,7 +2665,7 @@ try {
   if(sd){
     const s = JSON.parse(sd);
     COLS = s.COLS||[]; DATA = s.DATA||[]; NUM_COLS = s.NUM_COLS||[];
-    if(DATA.length){ showPreview(); renderTransformUI(); setTimeout(()=>toast(`📂 โหลดข้อมูลที่บันทึกไว้ ${DATA.length} แถว`,3000), 400); }
+    if(DATA.length){ showPreview(); renderFilterUI(); renderTransformUI(); setTimeout(()=>toast(`📂 โหลดข้อมูลที่บันทึกไว้ ${DATA.length} แถว`,3000), 400); }
   }
 } catch(e){}
 renderSavedList();
