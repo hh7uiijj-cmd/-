@@ -187,6 +187,14 @@ tr:nth-child(even) td{background:var(--gray-50)}
   border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px}
 .analyze-subtabs{display:flex;gap:4px;flex-wrap:wrap;padding:12px 12px 12px}
 .analyze-subtabs .tab{font-size:.8rem;padding:7px 12px}
+/* Sticky filter strip — stays visible while scrolling inside an analysis panel */
+.analyze-filter-strip{
+  position:sticky;top:var(--filter-top,68px);z-index:90;
+  background:linear-gradient(135deg,#eef4ff 0%,#fff 100%);
+  border:2px solid var(--blue);border-radius:var(--radius-sm);
+  padding:10px 14px;margin-bottom:12px;
+  box-shadow:0 3px 12px rgba(18,64,168,.15);
+}
 
 /* ─── Row-by-row form entry ─── */
 .form-field-wrap{display:flex;flex-direction:column;gap:4px;flex:1;min-width:100px}
@@ -286,17 +294,16 @@ tr:nth-child(even) td{background:var(--gray-50)}
       <button class="tab" onclick="showPanel('samplesize')">🎯 กลุ่มตัวอย่าง</button>
       <button class="tab" onclick="showPanel('calc')">🔢 คิดเลข</button>
     </div>
-    <!-- Compact filter bar for analyze section -->
-    <div id="analyze-filter-bar" style="display:none;padding:0 12px 12px">
-      <div style="background:#fff;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);padding:10px 14px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="font-size:.8rem;font-weight:700;color:var(--gray-600)">🔍 กรองข้อมูล</span>
-          <span id="analyze-filter-badge" class="badge" style="background:var(--blue-light);color:var(--blue-dark);font-size:.72rem"></span>
-          <button class="btn btn-outline btn-sm" style="margin-left:auto;padding:4px 10px;font-size:.75rem" onclick="clearFilters()">ล้างตัวกรอง</button>
-        </div>
-        <div id="analyze-filter-controls"></div>
-      </div>
+  </div>
+
+  <!-- Sticky filter bar — shown in วิเคราะห์ section when categorical columns exist -->
+  <div id="analyze-filter-bar" class="analyze-filter-strip" style="display:none">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:.8rem;font-weight:700;color:var(--blue-dark)">🔍 กรองข้อมูล</span>
+      <span id="analyze-filter-badge" class="badge" style="background:var(--blue-light);color:var(--blue-dark);font-size:.72rem"></span>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto;padding:4px 10px;font-size:.75rem" onclick="clearFilters()">ล้างตัวกรอง</button>
     </div>
+    <div id="analyze-filter-controls"></div>
   </div>
 
   <!-- ══════════════════════════════════════════════════
@@ -915,6 +922,11 @@ function showSection(section){
     document.getElementById('snav-'+s).classList.toggle('active', s===section);
   });
   document.getElementById('analyze-tabs-wrap').style.display = section==='analyze' ? '' : 'none';
+  // Hide sticky filter bar when leaving analyze section
+  if(section !== 'analyze'){
+    const fb = document.getElementById('analyze-filter-bar');
+    if(fb) fb.style.display = 'none';
+  }
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   if(section==='data'){
     document.getElementById('panel-data').classList.add('active');
@@ -948,6 +960,7 @@ function showPanel(id){
   const idx = ANALYZE_PANELS.indexOf(id);
   if(idx>=0) document.querySelectorAll('#analyze-tabs .tab')[idx]?.classList.add('active');
   if(id!=='data') refreshSelects();
+  if(ANALYZE_PANELS.includes(id) && DATA.length) renderAnalyzeFilterBar();
 }
 
 function toast(msg, dur=2500){
@@ -3110,6 +3123,11 @@ function loadSampleToGrid(){
 ═══════════════════════════════════════════════════════ */
 updateTTestUI();
 initGrid();
+// Set CSS var for sticky filter strip position (just below fixed header)
+(function(){
+  const hdr = document.querySelector('.header');
+  if(hdr) document.documentElement.style.setProperty('--filter-top', hdr.offsetHeight+'px');
+})();
 try {
   const sd = localStorage.getItem('statpad_data');
   if(sd){
