@@ -188,6 +188,17 @@ tr:nth-child(even) td{background:var(--gray-50)}
 .analyze-subtabs{display:flex;gap:4px;flex-wrap:wrap;padding:12px 12px 12px}
 .analyze-subtabs .tab{font-size:.8rem;padding:7px 12px}
 
+/* ─── Row-by-row form entry ─── */
+.form-field-wrap{display:flex;flex-direction:column;gap:4px;flex:1;min-width:100px}
+.form-col-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;
+  border-radius:20px;font-size:.8rem;font-weight:600;margin:3px}
+.fcc-cat{background:var(--orange-light);color:var(--orange)}
+.fcc-num{background:var(--blue-light);color:var(--blue-dark)}
+.fcc-rm{cursor:pointer;opacity:.55;font-size:.85rem}
+.fcc-rm:hover{opacity:1}
+.form-field-input-wrap{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;
+  padding:14px;background:var(--blue-light);border-radius:var(--radius-sm);margin-bottom:12px}
+
 /* ─── Output viewer ─── */
 .output-item{border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);
   margin-bottom:14px;overflow:hidden}
@@ -290,7 +301,8 @@ tr:nth-child(even) td{background:var(--gray-50)}
 
       <label>วิธีนำเข้า</label>
       <div class="tabs" style="margin-bottom:14px">
-        <button class="tab active" id="import-tab-grid" onclick="switchImport('grid')">✏️ ตารางกรอกข้อมูล</button>
+        <button class="tab active" id="import-tab-grid" onclick="switchImport('grid')">✏️ ตารางกรอก</button>
+        <button class="tab" id="import-tab-form" onclick="switchImport('form')" style="background:var(--orange-light);color:var(--orange);border-color:var(--orange)">📝 กรอกทีละแถว</button>
         <button class="tab" id="import-tab-paste" onclick="switchImport('paste')">📋 วาง (Paste)</button>
         <button class="tab" id="import-tab-csv" onclick="switchImport('csv')">📂 ไฟล์ CSV</button>
       </div>
@@ -319,6 +331,65 @@ tr:nth-child(even) td{background:var(--gray-50)}
             <button class="btn btn-outline btn-sm" onclick="exportGridPNG()">📸 PNG (รูปภาพ)</button>
           </div>
         </div>
+      </div>
+
+      <!-- Form entry mode -->
+      <div id="import-form" style="display:none">
+
+        <!-- Step 1: Define columns -->
+        <div id="form-setup-area">
+          <p class="data-hint" style="margin-bottom:10px">กำหนดคอลัมน์ก่อน: แยกเป็น <b>หมวดหมู่</b> (มีค่าให้เลือก dropdown) หรือ <b>ตัวเลข</b> (กรอกเอง)</p>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:flex-end">
+            <div class="form-field-wrap" style="min-width:110px">
+              <label>ชื่อคอลัมน์</label>
+              <input type="text" id="fc-name" placeholder="เช่น กลุ่มอายุ" onkeydown="if(event.key==='Enter')addFormCol()">
+            </div>
+            <div class="form-field-wrap" style="min-width:120px;flex:0">
+              <label>ประเภท</label>
+              <select id="fc-type" onchange="toggleFCVals()">
+                <option value="cat">🏷️ หมวดหมู่</option>
+                <option value="num">🔢 ตัวเลข</option>
+              </select>
+            </div>
+            <div class="form-field-wrap" id="fc-vals-wrap" style="min-width:170px">
+              <label>ค่าที่ใช้ได้ (คั่นด้วย ,)</label>
+              <input type="text" id="fc-vals" placeholder="≤5ปี,5-10ปี,≥10ปี" onkeydown="if(event.key==='Enter')addFormCol()">
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="addFormCol()" style="align-self:flex-end;flex-shrink:0">＋ เพิ่ม</button>
+          </div>
+
+          <div id="fc-list" style="min-height:38px;background:var(--gray-50);border:1.5px dashed var(--gray-300);border-radius:10px;padding:6px 10px;margin-bottom:12px">
+            <span id="fc-empty-hint" style="color:var(--gray-400);font-size:.82rem">ยังไม่มีคอลัมน์</span>
+          </div>
+
+          <p class="data-hint" style="margin-bottom:6px">ชุดสำเร็จรูป:</p>
+          <div class="btn-group" style="gap:6px;margin-bottom:14px">
+            <button class="btn btn-outline btn-sm" onclick="presetFormHW2()" style="background:var(--orange-light);color:var(--orange);border-color:var(--orange)">📋 แบบฝึกหัดที่ 2</button>
+            <button class="btn btn-outline btn-sm" onclick="presetFormGeneral()">👤 ทั่วไป (เพศ, อายุ, คะแนน)</button>
+          </div>
+          <button class="btn btn-primary" id="form-start-btn" onclick="startFormEntry()" disabled>▶ เริ่มกรอกข้อมูล</button>
+        </div>
+
+        <!-- Step 2: Entry form -->
+        <div id="form-entry-area" style="display:none">
+          <div class="form-field-input-wrap" id="form-fields-row"></div>
+          <div class="btn-group" style="margin-bottom:14px">
+            <button class="btn btn-primary" onclick="addFormRow()">➕ เพิ่มแถว (Enter)</button>
+            <button class="btn btn-outline btn-sm" onclick="clearFormNums()">🔄 ล้างตัวเลข</button>
+            <button class="btn btn-outline btn-sm" onclick="resetFormSetup()">← กลับตั้งค่า</button>
+          </div>
+          <div id="form-rows-area" style="display:none">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <span style="font-weight:700;font-size:.88rem">ข้อมูลที่กรอกแล้ว:</span>
+              <span id="form-row-count" class="badge" style="background:var(--green-light);color:var(--green)">0 แถว</span>
+              <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="clearFormRows()">🗑️ ล้าง</button>
+            </div>
+            <div class="tbl-wrap" id="form-rows-table" style="margin-bottom:12px"></div>
+            <button class="btn btn-primary" onclick="loadFromForm()">📥 โหลดข้อมูล → นำไปวิเคราะห์</button>
+          </div>
+        </div>
+
       </div>
 
       <!-- Paste mode -->
@@ -933,10 +1004,170 @@ function renderOutput(){
 }
 
 function switchImport(mode){
-  ['grid','paste','csv'].forEach(m=>{
+  ['grid','form','paste','csv'].forEach(m=>{
     document.getElementById('import-'+m).style.display = m===mode?'':'none';
-    document.getElementById('import-tab-'+m)?.classList.toggle('active',m===mode);
+    const tab = document.getElementById('import-tab-'+m);
+    if(tab){
+      if(m==='form'){
+        tab.style.background = m===mode ? 'var(--orange)' : 'var(--orange-light)';
+        tab.style.color = m===mode ? '#fff' : 'var(--orange)';
+      } else {
+        tab.classList.toggle('active', m===mode);
+      }
+    }
   });
+}
+
+/* ═══════════════════════════════════════════════════════
+   FORM ENTRY (row-by-row with dropdowns)
+═══════════════════════════════════════════════════════ */
+let FORM_COLS = []; // [{name, type:'cat'|'num', vals:[...]}]
+let FORM_ROWS = []; // array of row objects
+
+function toggleFCVals(){
+  const isCat = document.getElementById('fc-type').value==='cat';
+  document.getElementById('fc-vals-wrap').style.display = isCat ? '' : 'none';
+}
+
+function addFormCol(){
+  const name = document.getElementById('fc-name').value.trim();
+  if(!name){ toast('กรุณาใส่ชื่อคอลัมน์'); return; }
+  if(FORM_COLS.find(c=>c.name===name)){ toast('ชื่อซ้ำ'); return; }
+  const type = document.getElementById('fc-type').value;
+  const valsRaw = document.getElementById('fc-vals').value.trim();
+  const vals = type==='cat' ? valsRaw.split(',').map(v=>v.trim()).filter(Boolean) : [];
+  if(type==='cat' && vals.length<2){ toast('ใส่ค่าอย่างน้อย 2 ค่า คั่นด้วย ,'); return; }
+  FORM_COLS.push({name, type, vals});
+  document.getElementById('fc-name').value='';
+  document.getElementById('fc-vals').value='';
+  document.getElementById('fc-name').focus();
+  renderFormColsList();
+}
+
+function removeFormCol(i){ FORM_COLS.splice(i,1); renderFormColsList(); }
+
+function renderFormColsList(){
+  const list = document.getElementById('fc-list');
+  document.getElementById('form-start-btn').disabled = FORM_COLS.length===0;
+  if(!FORM_COLS.length){
+    list.innerHTML='<span id="fc-empty-hint" style="color:var(--gray-400);font-size:.82rem">ยังไม่มีคอลัมน์</span>';
+    return;
+  }
+  list.innerHTML = FORM_COLS.map((col,i)=>`
+    <span class="form-col-chip ${col.type==='cat'?'fcc-cat':'fcc-num'}">
+      ${col.type==='cat'?'🏷️':'🔢'} <b>${col.name}</b>
+      ${col.type==='cat'?`<span style="opacity:.65;font-size:.73rem">${col.vals.join(' / ')}</span>`:''}
+      <span class="fcc-rm" onclick="removeFormCol(${i})">✕</span>
+    </span>`).join('');
+}
+
+function presetFormHW2(){
+  FORM_COLS=[
+    {name:'กลุ่มอายุ',type:'cat',vals:['≤5ปี','5-10ปี','≥10ปี']},
+    {name:'เพศ',type:'cat',vals:['ชาย','หญิง']},
+    {name:'วันแรก',type:'num',vals:[]},
+    {name:'วันหลัง',type:'num',vals:[]}
+  ];
+  renderFormColsList();
+  toast('✅ โหลดชุดแบบฝึกหัดที่ 2 แล้ว — กด ▶ เริ่มกรอก');
+}
+
+function presetFormGeneral(){
+  FORM_COLS=[
+    {name:'เพศ',type:'cat',vals:['ชาย','หญิง']},
+    {name:'อายุ',type:'num',vals:[]},
+    {name:'คะแนน',type:'num',vals:[]}
+  ];
+  renderFormColsList();
+  toast('✅ โหลดชุดทั่วไปแล้ว');
+}
+
+function startFormEntry(){
+  if(!FORM_COLS.length){ toast('กำหนดคอลัมน์ก่อน'); return; }
+  FORM_ROWS=[];
+  document.getElementById('form-setup-area').style.display='none';
+  document.getElementById('form-entry-area').style.display='';
+  renderFormFields();
+  updateFormRowsArea();
+}
+
+function renderFormFields(){
+  const wrap = document.getElementById('form-fields-row');
+  wrap.innerHTML = FORM_COLS.map((col,i)=>{
+    const inp = col.type==='cat'
+      ? `<select id="ff-${i}" style="width:100%">${col.vals.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>`
+      : `<input type="number" id="ff-${i}" placeholder="กรอกตัวเลข" style="width:100%" onkeydown="handleFormKey(event,${i})">`;
+    return `<div class="form-field-wrap">
+      <label style="color:${col.type==='cat'?'var(--orange)':'var(--blue-dark)'}">${col.type==='cat'?'🏷️':'🔢'} ${col.name}</label>
+      ${inp}
+    </div>`;
+  }).join('');
+  focusFirstNum();
+}
+
+function focusFirstNum(){
+  const idx = FORM_COLS.findIndex(c=>c.type==='num');
+  if(idx>=0) setTimeout(()=>document.getElementById(`ff-${idx}`)?.focus(),60);
+}
+
+function handleFormKey(e, colIdx){
+  if(e.key==='Enter'){ e.preventDefault(); addFormRow(); return; }
+  if(e.key==='Tab'){
+    const nextNum = FORM_COLS.findIndex((c,i)=>i>colIdx && c.type==='num');
+    if(nextNum>=0){ e.preventDefault(); document.getElementById(`ff-${nextNum}`)?.focus(); }
+  }
+}
+
+function addFormRow(){
+  const row={};
+  for(let i=0;i<FORM_COLS.length;i++){
+    const col=FORM_COLS[i];
+    const el=document.getElementById(`ff-${i}`);
+    const val=(el?.value??'').trim();
+    if(col.type==='num' && val===''){
+      toast(`⚠️ กรุณากรอก "${col.name}"`); el?.focus(); return;
+    }
+    row[col.name]=val;
+  }
+  FORM_ROWS.push(row);
+  clearFormNums();
+  updateFormRowsArea();
+  focusFirstNum();
+}
+
+function clearFormNums(){
+  FORM_COLS.forEach((col,i)=>{ if(col.type==='num'){ const el=document.getElementById(`ff-${i}`); if(el) el.value=''; } });
+}
+
+function updateFormRowsArea(){
+  const n=FORM_ROWS.length;
+  document.getElementById('form-row-count').textContent=`${n} แถว`;
+  document.getElementById('form-rows-area').style.display=n>0?'':'none';
+  if(!n){ document.getElementById('form-rows-table').innerHTML=''; return; }
+  const cols=FORM_COLS.map(c=>c.name);
+  let html=`<table><thead><tr><th>#</th>${cols.map(c=>`<th>${c}</th>`).join('')}<th></th></tr></thead><tbody>`;
+  FORM_ROWS.forEach((row,i)=>{
+    html+=`<tr><td style="color:var(--gray-400);font-size:.75rem">${i+1}</td>`;
+    html+=cols.map(c=>`<td>${row[c]??''}</td>`).join('');
+    html+=`<td><button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:.75rem" onclick="removeFormRow(${i})">✕</button></td></tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('form-rows-table').innerHTML=html;
+}
+
+function removeFormRow(i){ FORM_ROWS.splice(i,1); updateFormRowsArea(); }
+function clearFormRows(){ FORM_ROWS=[]; updateFormRowsArea(); }
+
+function loadFromForm(){
+  if(!FORM_ROWS.length){ toast('⚠️ ยังไม่มีข้อมูล'); return; }
+  const cols=FORM_COLS.map(c=>c.name);
+  loadData(cols, FORM_ROWS.map(r=>({...r})));
+  showSection('data');
+}
+
+function resetFormSetup(){
+  document.getElementById('form-setup-area').style.display='';
+  document.getElementById('form-entry-area').style.display='none';
 }
 
 /* ═══════════════════════════════════════════════════════
