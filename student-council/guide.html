@@ -720,7 +720,20 @@ code{
 
     <div id="z-summary"></div>
 
-    <div style="overflow-x:auto;margin-top:12px;">
+    <!-- Filter bar -->
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;align-items:center;">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:.75rem;font-weight:700;color:var(--text2);">เพศ</span>
+        <div id="filter-sex" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:.75rem;font-weight:700;color:var(--text2);">กลุ่มอายุ</span>
+        <div id="filter-age" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+      </div>
+      <span id="z-count" style="margin-left:auto;font-size:.75rem;color:var(--text2);"></span>
+    </div>
+
+    <div style="overflow-x:auto;margin-top:10px;">
       <table class="lookup" id="z-table">
         <thead>
           <tr>
@@ -778,7 +791,7 @@ function fallback(txt, cb){
 (function buildZTable(){
   const raw = document.getElementById('data-block').textContent.trim();
   const rows = raw.split('\n').slice(1);
-  const data = rows.map((r, i) => {
+  const DATA = rows.map((r, i) => {
     const c = r.split('\t');
     return { n: i + 1, age: c[0], sex: c[1], x1: +c[2], x2: +c[3] };
   });
@@ -786,46 +799,87 @@ function fallback(txt, cb){
   const mean = arr => arr.reduce((s, v) => s + v, 0) / arr.length;
   const sdPop = (arr, m) => Math.sqrt(arr.reduce((s, v) => s + (v - m) ** 2, 0) / arr.length);
 
-  const x1 = data.map(d => d.x1);
-  const x2 = data.map(d => d.x2);
-  const m1 = mean(x1), s1 = sdPop(x1, m1);
-  const m2 = mean(x2), s2 = sdPop(x2, m2);
+  const x1all = DATA.map(d => d.x1);
+  const x2all = DATA.map(d => d.x2);
+  const m1 = mean(x1all), s1 = sdPop(x1all, m1);
+  const m2 = mean(x2all), s2 = sdPop(x2all, m2);
 
   document.getElementById('z-summary').innerHTML =
     `<div class="result-box" style="font-size:.82rem;">
       <b>วันแรก</b>: x̄ = ${m1.toFixed(2)}, SD = ${s1.toFixed(4)}
       &nbsp;&nbsp;|&nbsp;&nbsp;
       <b>วันหลัง</b>: x̄ = ${m2.toFixed(2)}, SD = ${s2.toFixed(4)}
-      &nbsp;&nbsp;|&nbsp;&nbsp; n = ${data.length}
+      &nbsp;&nbsp;|&nbsp;&nbsp; n = ${DATA.length}
     </div>`;
 
-  const fmt = v => (v >= 0 ? '+' : '') + v.toFixed(3);
-  const fmtDz = (v, el) => {
-    const s = fmt(v);
-    if (Math.abs(v) < 0.001) { el.style.color = 'var(--text2)'; }
-    else if (v > 0) { el.style.color = 'var(--blue)'; el.style.fontWeight = '700'; }
-    else { el.style.color = 'var(--orange)'; el.style.fontWeight = '700'; }
-    return s;
-  };
+  // Enrich rows with Z values
+  const rows_z = DATA.map(d => ({
+    ...d,
+    z1: (d.x1 - m1) / s1,
+    z2: (d.x2 - m2) / s2,
+    dz: (d.x1 - m1) / s1 - (d.x2 - m2) / s2,
+  }));
 
-  const tbody = document.getElementById('z-table-body');
-  data.forEach(d => {
-    const z1 = (d.x1 - m1) / s1;
-    const z2 = (d.x2 - m2) / s2;
-    const dz = z1 - z2;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="color:var(--text2);font-size:.72rem;">${d.n}</td>
-      <td style="white-space:nowrap;">${d.age}</td>
-      <td>${d.sex}</td>
-      <td style="font-variant-numeric:tabular-nums;text-align:right;">${d.x1}</td>
-      <td style="font-variant-numeric:tabular-nums;text-align:right;font-family:var(--mono);">${fmt(z1)}</td>
-      <td style="font-variant-numeric:tabular-nums;text-align:right;">${d.x2}</td>
-      <td style="font-variant-numeric:tabular-nums;text-align:right;font-family:var(--mono);">${fmt(z2)}</td>
-      <td class="dz-cell" style="font-variant-numeric:tabular-nums;text-align:right;font-family:var(--mono);"></td>`;
-    const dzCell = tr.querySelector('.dz-cell');
-    dzCell.textContent = fmtDz(dz, dzCell);
-    tbody.appendChild(tr);
-  });
+  // Build filter chips
+  const ages = ['ทั้งหมด', ...new Set(DATA.map(d => d.age))];
+  const sexes = ['ทั้งหมด', ...new Set(DATA.map(d => d.sex))];
+
+  let selAge = 'ทั้งหมด', selSex = 'ทั้งหมด';
+
+  function makeChips(containerId, items, getCur, setCur) {
+    const el = document.getElementById(containerId);
+    const render = () => {
+      el.innerHTML = '';
+      items.forEach(v => {
+        const btn = document.createElement('button');
+        btn.textContent = v;
+        btn.style.cssText = `font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;border:1.5px solid;transition:all .1s;`;
+        const active = getCur() === v;
+        btn.style.background = active ? 'var(--blue)' : 'var(--surf)';
+        btn.style.color = active ? '#fff' : 'var(--blue)';
+        btn.style.borderColor = 'var(--blue)';
+        btn.onclick = () => { setCur(v); render(); renderTable(); };
+        el.appendChild(btn);
+      });
+    };
+    render();
+  }
+
+  makeChips('filter-age', ages, () => selAge, v => selAge = v);
+  makeChips('filter-sex', sexes, () => selSex, v => selSex = v);
+
+  const fmt = v => (v >= 0 ? '+' : '') + v.toFixed(3);
+
+  function renderTable() {
+    const visible = rows_z.filter(d =>
+      (selAge === 'ทั้งหมด' || d.age === selAge) &&
+      (selSex === 'ทั้งหมด' || d.sex === selSex)
+    );
+
+    document.getElementById('z-count').textContent = `แสดง ${visible.length} / ${DATA.length} แถว`;
+
+    const tbody = document.getElementById('z-table-body');
+    tbody.innerHTML = '';
+    visible.forEach(d => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="color:var(--text2);font-size:.72rem;">${d.n}</td>
+        <td style="white-space:nowrap;">${d.age}</td>
+        <td>${d.sex}</td>
+        <td style="font-variant-numeric:tabular-nums;text-align:right;">${d.x1}</td>
+        <td style="font-variant-numeric:tabular-nums;text-align:right;font-family:var(--mono);">${fmt(d.z1)}</td>
+        <td style="font-variant-numeric:tabular-nums;text-align:right;">${d.x2}</td>
+        <td style="font-variant-numeric:tabular-nums;text-align:right;font-family:var(--mono);">${fmt(d.z2)}</td>
+        <td class="dz-cell" style="font-variant-numeric:tabular-nums;text-align:right;font-family:var(--mono);font-weight:700;"></td>`;
+      const dzCell = tr.querySelector('.dz-cell');
+      dzCell.textContent = fmt(d.dz);
+      if (Math.abs(d.dz) < 0.001) dzCell.style.color = 'var(--text2)';
+      else if (d.dz > 0) dzCell.style.color = 'var(--blue)';
+      else dzCell.style.color = 'var(--orange)';
+      tbody.appendChild(tr);
+    });
+  }
+
+  renderTable();
 })();
 </script>
