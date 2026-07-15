@@ -3254,13 +3254,19 @@ function runZcompare(){
   if(!ca||!cb){ toast('เลือกตัวแปรทั้งสอง'); return; }
   if(ca===cb){ toast('เลือกตัวแปรต่างกัน'); return; }
 
-  const pairsRaw = FD().map(r=>({
-    a: parseFloat(r[ca]), b: parseFloat(r[cb])
-  })).filter(r=>!isNaN(r.a)&&!isNaN(r.b));
+  const catCols = _getFilterCatCols();
+  const pairsRaw = FD().map(r=>{
+    const a=parseFloat(r[ca]), b=parseFloat(r[cb]);
+    const cats={};
+    catCols.forEach(c=>cats[c]=r[c]??'');
+    return {a,b,cats};
+  }).filter(r=>!isNaN(r.a)&&!isNaN(r.b));
 
   const arrA = pairsRaw.map(r=>r.a), arrB = pairsRaw.map(r=>r.b);
   const mA=mean(arrA), sA=sd(arrA), mB=mean(arrB), sB=sd(arrB);
   const n = arrA.length;
+
+  const catHeaders = catCols.map(c=>`<th>${c}</th>`).join('');
 
   let html = `<div class="result-box" style="margin-top:14px">
     <div class="result-title">📐 เปรียบเทียบ Z-score: ${ca} vs ${cb}</div>
@@ -3272,16 +3278,17 @@ function runZcompare(){
     </div>
     <div class="interp info">Z = (X − X̄) / SD &nbsp;แยกคำนวณตามตัวแปรของตัวเอง</div>
     <div class="tbl-wrap" style="margin-top:10px"><table><thead><tr>
-      <th>#</th>
+      <th>#</th>${catHeaders}
       <th>${ca}</th><th>Z (${ca})</th>
       <th>${cb}</th><th>Z (${cb})</th>
       <th>Z ต่างกัน</th></tr></thead><tbody>`;
 
-  arrA.forEach((a,i)=>{
-    const b=arrB[i];
+  pairsRaw.forEach((r,i)=>{
+    const {a,b,cats}=r;
     const zA=(a-mA)/sA, zB=(b-mB)/sB;
     const diff=zA-zB;
-    html+=`<tr><td>${i+1}</td>
+    const catCells=catCols.map(c=>`<td>${cats[c]}</td>`).join('');
+    html+=`<tr><td>${i+1}</td>${catCells}
       <td>${fmt(a,2)}</td><td>${zA>=0?'+':''}${fmt(zA,3)}</td>
       <td>${fmt(b,2)}</td><td>${zB>=0?'+':''}${fmt(zB,3)}</td>
       <td style="color:${Math.abs(diff)>.5?'var(--orange)':'inherit'}">${diff>=0?'+':''}${fmt(diff,3)}</td></tr>`;
